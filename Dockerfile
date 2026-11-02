@@ -11,6 +11,7 @@ RUN apk add --no-cache \
     sqlite \
     sqlite-dev \
     mysql-client \
+    ca-certificates \
     oniguruma-dev
 
 RUN docker-php-ext-install pdo pdo_mysql pdo_sqlite mbstring zip bcmath pcntl
