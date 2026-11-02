@@ -205,7 +205,7 @@
             </div>
 
             <p class="text-xs text-slate-600 max-w-xs mx-auto mb-3">
-              GPay, PhonePe, Paytm ya kisi bhi UPI app se QR code scan karke direct payment karein.
+              Scan this QR code using Google Pay, PhonePe, Paytm, or any UPI app to pay directly.
             </p>
 
             <!-- Direct UPI Link for Mobile -->
@@ -466,7 +466,7 @@
               Triple Match Won! 🎉
             </h4>
             <p class="text-xs text-slate-300 max-w-xs mx-auto mt-1">
-              Aapne pehla game jeet liya hai! Ab <strong>Game 2 (Speed Reflex)</strong> jeeto aur 5% discount unlock karo!
+              You cleared Round 1! Now win <strong>Game 2 (Speed Reflex)</strong> to unlock your 5% discount!
             </p>
           </div>
 
@@ -508,7 +508,7 @@
 
           <div class="py-1 px-3 bg-teal-950/70 border border-teal-500/30 rounded-xl text-center text-[11px] text-teal-300 flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-bolt text-amber-400"></i>
-            <span>Jumping emoji par tap karein! 10 targets hit karne hain.</span>
+            <span>Tap the jumping targets! Hit 10 targets before time runs out.</span>
           </div>
 
           <!-- 3x3 Reflex Board (9 spots) -->
@@ -544,7 +544,7 @@
               You Won Both Games! 🎉
             </h4>
             <p class="text-xs text-slate-300 max-w-xs mx-auto mt-1">
-              Triple Match aur Speed Reflex dono clear ho gaye! 5% discount live bill par lag chuka hai.
+              Both Triple Match and Speed Reflex cleared! A 5% discount has been applied to your live bill.
             </p>
           </div>
 
@@ -600,10 +600,10 @@
           <div>
             <h4 class="text-lg font-extrabold text-white">Time's Up!</h4>
             <p v-if="activeGame === 1" class="text-xs text-slate-400 max-w-xs mx-auto mt-1">
-              Game 1 me 45s poore ho gaye! Aapne {{ matchedTripletsCount }} out of 4 triplets match kiye. Dobara try karein!
+              Time expired! You matched {{ matchedTripletsCount }} out of 4 triplets. Try again!
             </p>
             <p v-else class="text-xs text-slate-400 max-w-xs mx-auto mt-1">
-              Game 2 me time khatam! Aapne {{ reflexScore }} out of 10 targets hit kiye. Game 1 pehle se cleared hai, Game 2 dobara try karein!
+              Time's up! You tapped {{ reflexScore }} out of 10 targets. Game 1 is saved, try Game 2 again!
             </p>
           </div>
 

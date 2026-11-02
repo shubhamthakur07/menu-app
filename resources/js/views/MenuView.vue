@@ -426,10 +426,10 @@
             <div v-if="orderType === 'dine_in' && selectedTableIsOccupied" class="bg-amber-50 border border-amber-300 rounded-2xl p-3 text-xs text-amber-950">
               <div class="flex items-center gap-2 font-bold text-amber-900 mb-1">
                 <i class="fa-solid fa-users text-amber-600"></i>
-                <span>Table {{ currentTable }} par pehle se active order chal raha hai!</span>
+                <span>Table {{ currentTable }} currently has an active order!</span>
               </div>
               <p class="text-[11px] text-amber-800 leading-relaxed">
-                Agar aap aur aapke dost ek hi table par sath baithe hain, to ye order <strong>{{ currentTable }}</strong> ke running tab me jud jayega. Agar aap alag table par hain, to kripya table change karein.
+                If you are sharing this table with your group, this order will be added to <strong>{{ currentTable }}</strong>'s running bill. If you are seated at a different table, please switch your table.
               </p>
               <button
                 type="button"
@@ -541,7 +541,7 @@
                 <div>
                   <div class="text-xs font-bold text-slate-900">Direct Pay at Counter</div>
                   <div class="text-[11px] text-slate-500">
-                    {{ orderType === 'delivery' ? 'Cash on delivery par payment karein.' : 'Aapka order kitchen ko send ho jayega. Bill payment counter ya table par cash/card se karein.' }}
+                    {{ orderType === 'delivery' ? 'Pay upon delivery via cash or UPI.' : 'Your order will be sent to the kitchen or service desk. Settle the bill via cash or card at the counter or table.' }}
                   </div>
                 </div>
               </div>
@@ -680,8 +680,8 @@
           <div v-if="selectedTableIsOccupied" class="p-3 mb-3 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
             <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
             <div>
-              <span class="font-bold">{{ currentTable }} par pehle se active order hai.</span>
-              <p class="text-[10px] text-amber-800 mt-0.5">Agar aap isi table par baithe hain aur add karna chahte hain, to proceed karein, ya koi dusri Free table chunein.</p>
+              <span class="font-bold">{{ currentTable }} already has an active order.</span>
+              <p class="text-[10px] text-amber-800 mt-0.5">If you are seated at this table and adding more items, proceed ahead. Otherwise, select any vacant table.</p>
             </div>
           </div>
 

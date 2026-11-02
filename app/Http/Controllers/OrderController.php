@@ -67,7 +67,7 @@ class OrderController extends Controller
             if ($existingActiveCount > 0 && !$restaurant->allow_shared_table_orders) {
                 return response()->json([
                     'success' => false,
-                    'message' => "{$validated['table_number']} par pehle se active order chal raha hai aur table occupied hai. Kripya koi dusri table select karein.",
+                    'message' => "{$validated['table_number']} already has an active order and is occupied. Please select another available table.",
                 ], 422);
             }
         }

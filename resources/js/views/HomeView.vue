@@ -42,7 +42,7 @@
           <span class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 bg-clip-text text-transparent">Hotels & Restaurants</span>
         </h2>
         <p class="text-lg text-slate-300 mb-8 leading-relaxed">
-          Har hotel aur restaurant ka alag menu, table-wise QR codes, instant customer order placement, aur UPI/Direct online payment setup — sab ek click me!
+          Individual digital menus for every business, table-wise QR codes, instant customer order placement, and direct UPI online payments — all in one click!
         </p>
 
         <!-- Quick Demo Accounts Box -->
@@ -118,28 +118,28 @@
             <i class="fa-solid fa-building"></i>
           </div>
           <h4 class="font-bold text-white mb-1">Multi-Restaurant</h4>
-          <p class="text-xs text-slate-400">Har owner ka apna isolated menu, rates, aur table settings</p>
+          <p class="text-xs text-slate-400">Independent menus, custom pricing, and table setups for every business owner</p>
         </div>
         <div class="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 text-center">
           <div class="w-12 h-12 mx-auto rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl mb-3">
             <i class="fa-solid fa-qrcode"></i>
           </div>
           <h4 class="font-bold text-white mb-1">Table QR Scanning</h4>
-          <p class="text-xs text-slate-400">Customer scan karega aur table number automatically detect ho jayega</p>
+          <p class="text-xs text-slate-400">Customers scan the QR code and their table number is automatically detected</p>
         </div>
         <div class="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 text-center">
           <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl mb-3">
             <i class="fa-solid fa-indian-rupee-sign"></i>
           </div>
           <h4 class="font-bold text-white mb-1">UPI & Online Payment</h4>
-          <p class="text-xs text-slate-400">Owner ka apna UPI ID / QR set up aur customer direct pay karega</p>
+          <p class="text-xs text-slate-400">Configure your business UPI ID / QR for direct zero-commission customer payments</p>
         </div>
         <div class="p-5 rounded-2xl bg-slate-800/40 border border-slate-700/60 text-center">
           <div class="w-12 h-12 mx-auto rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl mb-3">
             <i class="fa-solid fa-bell-concierge"></i>
           </div>
           <h4 class="font-bold text-white mb-1">Live Order Management</h4>
-          <p class="text-xs text-slate-400">Kitchen screen pe live orders, status update (Preparing/Ready/Served)</p>
+          <p class="text-xs text-slate-400">Kitchen display screen with real-time order status updates (Preparing, Ready, Served)</p>
         </div>
       </div>
 

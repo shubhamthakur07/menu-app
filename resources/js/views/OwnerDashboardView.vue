@@ -579,7 +579,7 @@
               <h2 class="text-xl font-bold text-white flex items-center gap-2">
                 <i class="fa-solid fa-chair text-amber-500"></i> Floor & Tables Management
               </h2>
-              <p class="text-xs text-slate-400">Apne hisab se naye tables add karein, capacity set karein aur live occupancy dekhein</p>
+              <p class="text-xs text-slate-400">Add tables or chairs, configure seating capacity, and monitor live occupancy in real-time</p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -723,7 +723,7 @@
         <div v-if="activeTab === 'qrcodes'" class="space-y-6">
           <div>
             <h2 class="text-xl font-bold text-white">Table QR Codes & Print Ready Generator</h2>
-            <p class="text-xs text-slate-400">Har dynamic table ka custom QR code generate karein aur download/print karein</p>
+            <p class="text-xs text-slate-400">Generate, customize, download, and print high-resolution QR codes for each table</p>
           </div>
 
           <!-- Table Selector Control -->
@@ -802,7 +802,7 @@
         <div v-if="activeTab === 'settings'" class="max-w-3xl space-y-6">
           <div>
             <h2 class="text-xl font-bold text-white">Restaurant Profile & Payment Configuration</h2>
-            <p class="text-xs text-slate-400">Apni payment UPI ID, tax percentage, table count aur profile details update karein</p>
+            <p class="text-xs text-slate-400">Update your payment UPI ID, tax percentage, table count, and business profile details</p>
           </div>
 
           <form @submit.prevent="updateRestaurantSettings" class="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 space-y-5">
@@ -909,7 +909,7 @@
                         </span>
                       </div>
                       <span class="text-[11px] text-slate-400 block mt-1">
-                        Agar aap chahte hain ki customer UPI QR se online payment kare, to ise ON rakhein. Agar aap chahte hain ki customer sirf menu dekhe aur payment counter/offline par khud kare, to ise OFF kar dein.
+                        Turn ON to allow customers to pay via UPI QR code. Turn OFF if you prefer customers to browse the digital menu and settle payment directly at the counter.
                       </span>
                     </div>
                     <input
@@ -937,7 +937,7 @@
                         </span>
                       </div>
                       <span class="text-[11px] text-slate-400 block mt-1">
-                        Customer ko table par ya counter par cash/card se direct pay karne ki suvidha dein.
+                        Enable customers to pay directly via cash or card at the counter or their table.
                       </span>
                     </div>
                     <input
@@ -983,7 +983,7 @@
               <!-- Notice if Online Payment is disabled -->
               <div v-else class="p-3 bg-slate-800/60 rounded-xl border border-slate-700 text-xs text-slate-400 flex items-center gap-2 mb-4">
                 <i class="fa-solid fa-circle-info text-amber-400"></i>
-                <span>Online payment disabled hai. Customer QR scan karke sirf digital menu dekhega aur order karega — payment counter/table par direct hogi.</span>
+                <span>Online payment is disabled. Customers will browse the digital menu and place orders, while payment will be settled in-person at the counter or table.</span>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -1016,7 +1016,7 @@
                   <div>
                     <span class="text-xs font-bold text-white block">Allow Multiple Orders on Same Table (Group Dining)</span>
                     <span class="text-[10px] text-slate-400">
-                      ON hone par ek hi table par baithe dost alag-alag order de sakte hain. OFF hone par table par 1 hi order allow hoga.
+                      When ON, multiple guests at the same table can place separate orders. When OFF, only one active order is permitted per table at a time.
                     </span>
                   </div>
                   <input

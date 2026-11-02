@@ -8,7 +8,7 @@
         <span class="text-2xl font-extrabold text-white">QRMenu</span>
       </router-link>
       <h2 class="text-2xl font-bold tracking-tight text-white">Create Restaurant / Hotel Owner Account</h2>
-      <p class="mt-1 text-xs text-slate-400">Apna restaurant register karein aur instant QR Menu banayein</p>
+      <p class="mt-1 text-xs text-slate-400">Register your business and generate instant QR Menus</p>
     </div>
 
     <div class="mt-6 sm:mx-auto sm:w-full sm:max-w-lg">
@@ -146,7 +146,7 @@
               <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">
                   UPI ID for Customer Online Payments (Optional)
-                  <span class="text-[10px] text-amber-300 font-normal">(User direct yahan pay karega)</span>
+                  <span class="text-[10px] text-amber-300 font-normal">(Customers pay directly to this UPI)</span>
                 </label>
                 <input
                   v-model="form.upi_id"
