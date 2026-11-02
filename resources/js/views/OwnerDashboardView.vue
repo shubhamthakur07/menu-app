@@ -1,24 +1,27 @@
 <template>
   <div class="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-    <!-- Live New Order Popup Banner & Notification Alert -->
+    <!-- Live Notification Banner (New Order & Payment Completed) -->
     <transition enter-active-class="transform transition ease-out duration-300" enter-from-class="translate-y-[-100%] opacity-0" enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div
         v-if="newOrderToast"
-        class="fixed top-4 right-4 z-50 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 px-4 py-3 rounded-2xl shadow-2xl border-2 border-white/80 flex items-center gap-3"
+        :class="[
+          'fixed top-4 right-4 z-50 text-slate-950 px-4 py-3 rounded-2xl shadow-2xl border-2 border-white/80 flex items-center gap-3',
+          newOrderToast.type === 'payment' ? 'bg-gradient-to-r from-emerald-400 to-teal-400' : 'bg-gradient-to-r from-amber-500 to-orange-500'
+        ]"
       >
-        <div class="w-10 h-10 rounded-xl bg-slate-950 text-amber-400 flex items-center justify-center font-extrabold text-lg shadow">
-          <i class="fa-solid fa-bell animate-bounce"></i>
+        <div class="w-10 h-10 rounded-xl bg-slate-950 text-white flex items-center justify-center font-extrabold text-lg shadow">
+          <i :class="newOrderToast.type === 'payment' ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-bell animate-bounce text-amber-400'"></i>
         </div>
         <div>
           <div class="font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
-            <span>New Order Received!</span>
+            <span>{{ newOrderToast.title || 'Notification' }}</span>
             <span class="bg-slate-950 text-white text-[9px] px-1.5 py-0.2 rounded font-mono">Live</span>
           </div>
           <div class="text-xs font-bold mt-0.5">
-            #{{ newOrderToast.order_code }} • {{ newOrderToast.table_number || (newOrderToast.order_type === 'delivery' ? 'Home Delivery' : 'Takeaway') }} • {{ restaurant?.currency }}{{ newOrderToast.total_amount }}
+            #{{ newOrderToast.code }} • {{ newOrderToast.location }} • {{ restaurant?.currency }}{{ newOrderToast.amount }}
           </div>
           <div class="text-[10px] text-slate-900 font-semibold truncate max-w-[200px]">
-            {{ newOrderToast.customer_name }} ({{ newOrderToast.customer_phone }})
+            {{ newOrderToast.customer }}
           </div>
         </div>
         <button @click="newOrderToast = null" class="w-6 h-6 rounded-full bg-slate-950/20 hover:bg-slate-950/40 text-slate-950 flex items-center justify-center transition cursor-pointer ml-1">
@@ -62,6 +65,17 @@
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
             <span class="hidden sm:inline">Open Live Menu</span>
           </a>
+
+          <!-- Live Alerts & Sound Toggle Button -->
+          <button
+            @click="toggleNotificationAlerts"
+            class="px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+            :class="notificationsEnabled ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white'"
+            :title="notificationsEnabled ? 'Live Order & Payment Alerts Active' : 'Click to enable Live Sound & Push Alerts'"
+          >
+            <i :class="notificationsEnabled ? 'fa-solid fa-bell text-emerald-400' : 'fa-regular fa-bell text-slate-400'"></i>
+            <span class="hidden sm:inline">{{ notificationsEnabled ? 'Alerts ON' : 'Enable Alerts' }}</span>
+          </button>
 
           <!-- Logout Button -->
           <button
@@ -1764,6 +1778,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import QRCode from 'qrcode';
 import html2pdf from 'html2pdf.js';
+import { playSound, sendSystemNotification, requestNotificationPermission } from '../utils/notification';
 
 const router = useRouter();
 
@@ -1777,6 +1792,13 @@ const menuItems = ref([]);
 const orderStatusFilter = ref('all');
 const updatingOrderId = ref(null);
 const newOrderToast = ref(null);
+const notificationsEnabled = ref(false);
+
+const toggleNotificationAlerts = async () => {
+  playSound('new_order');
+  await requestNotificationPermission();
+  notificationsEnabled.value = true;
+};
 
 // Modals
 const showDishModal = ref(false);
@@ -2031,33 +2053,6 @@ const showNewOrderToast = (order) => {
   }, 6000);
 };
 
-const playNewOrderChime = () => {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, now);
-    osc.frequency.setValueAtTime(1320, now + 0.15);
-
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.6);
-  } catch (e) {
-    // Audio autoplay restrictions fallback
-  }
-};
-
 const fetchOrders = async (silent = false) => {
   try {
     const params = {};
@@ -2068,13 +2063,42 @@ const fetchOrders = async (silent = false) => {
     if (res.data.success) {
       const incoming = res.data.orders.data || res.data.orders || [];
 
-      // Check if new orders arrived compared to current list
+      // Detect New Orders & Payment Completed on Existing Orders
       if (orders.value.length > 0 && incoming.length > 0) {
-        const existingIds = new Set(orders.value.map(o => o.id));
-        const brandNewOrders = incoming.filter(o => !existingIds.has(o.id));
+        const existingMap = new Map(orders.value.map(o => [o.id, o]));
+
+        // 1. Brand New Order Detected
+        const brandNewOrders = incoming.filter(o => !existingMap.has(o.id));
         if (brandNewOrders.length > 0) {
-          playNewOrderChime();
-          showNewOrderToast(brandNewOrders[0]);
+          const newest = brandNewOrders[0];
+          playSound('new_order');
+          sendSystemNotification('New Order Received! 🛎️', `#${newest.order_code} • ${newest.table_number || 'Delivery'} (${restaurant.value?.currency || '₹'}${newest.total_amount})`);
+          showNewOrderToast({
+            type: 'new_order',
+            title: 'NEW ORDER RECEIVED!',
+            code: newest.order_code,
+            location: newest.table_number || (newest.order_type === 'delivery' ? 'Home Delivery' : 'Takeaway'),
+            amount: newest.total_amount,
+            customer: `${newest.customer_name} (${newest.customer_phone})`,
+          });
+        }
+
+        // 2. Payment Completed Detected
+        for (const inc of incoming) {
+          const old = existingMap.get(inc.id);
+          if (old && old.payment_status !== 'paid' && inc.payment_status === 'paid') {
+            playSound('payment_success');
+            sendSystemNotification('Payment Completed! 💰', `#${inc.order_code} • ${restaurant.value?.currency || '₹'}${inc.total_amount} paid successfully`);
+            showNewOrderToast({
+              type: 'payment',
+              title: 'PAYMENT COMPLETED!',
+              code: inc.order_code,
+              location: inc.table_number || 'Order',
+              amount: inc.total_amount,
+              customer: `${inc.customer_name} paid via UPI / Cash`,
+            });
+            break;
+          }
         }
       }
 

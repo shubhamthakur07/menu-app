@@ -1,5 +1,26 @@
 <template>
   <div class="min-h-screen bg-slate-100 py-8 px-4 sm:px-6">
+    <!-- Live Food & Payment Status Notification Toast -->
+    <transition enter-active-class="transform transition ease-out duration-300" enter-from-class="translate-y-[-100%] opacity-0" enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div
+        v-if="customerToast"
+        :class="[
+          'fixed top-4 left-1/2 -translate-x-1/2 z-50 text-white px-5 py-3.5 rounded-2xl shadow-2xl border-2 border-white/60 flex items-center gap-3 w-11/12 max-w-md',
+          customerToast.color || 'bg-slate-900'
+        ]"
+      >
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-bold text-lg shrink-0">
+          <i :class="customerToast.icon || 'fa-solid fa-bell'"></i>
+        </div>
+        <div class="flex-1">
+          <div class="font-black text-xs uppercase tracking-wider">{{ customerToast.title }}</div>
+          <div class="text-[11px] font-medium text-white/95 mt-0.5">{{ customerToast.message }}</div>
+        </div>
+        <button @click="customerToast = null" class="w-7 h-7 rounded-full bg-black/20 hover:bg-black/30 text-white flex items-center justify-center transition cursor-pointer shrink-0">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+    </transition>
     <div v-if="loading" class="text-center py-20">
       <i class="fa-solid fa-circle-notch fa-spin text-4xl text-amber-500 mb-3"></i>
       <p class="text-slate-500 font-medium text-sm">Fetching order details...</p>
@@ -47,8 +68,8 @@
             <p v-else class="text-xs text-slate-500 mt-1">{{ order.table_number }} • Placed at {{ formatDate(order.created_at) }}</p>
           </div>
 
-          <!-- Order Status Badge -->
-          <div class="text-right shrink-0">
+          <!-- Order Status Badge & Live Alert Pill -->
+          <div class="text-right shrink-0 flex flex-col items-end gap-1.5">
             <span
               :class="[
                 'text-xs font-extrabold px-3 py-1.5 rounded-full capitalize inline-flex items-center gap-1.5',
@@ -58,6 +79,16 @@
               <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
               {{ order.order_status }}
             </span>
+
+            <button
+              @click="enableCustomerAlerts"
+              class="text-[10px] font-bold px-2.5 py-1 rounded-xl border flex items-center gap-1 transition cursor-pointer"
+              :class="customerAlertsEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
+              :title="customerAlertsEnabled ? 'Live Sound & Status Alerts Active' : 'Enable sound alerts for cooking, ready, and payment status'"
+            >
+              <i :class="customerAlertsEnabled ? 'fa-solid fa-bell text-emerald-600' : 'fa-regular fa-bell text-slate-500'"></i>
+              <span>{{ customerAlertsEnabled ? 'Alerts ON' : 'Enable Alerts' }}</span>
+            </button>
           </div>
         </div>
 
@@ -629,6 +660,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import QRCode from 'qrcode';
+import { playSound, sendSystemNotification, requestNotificationPermission } from '../utils/notification';
 
 const route = useRoute();
 const order = ref(null);
@@ -637,6 +669,27 @@ const upiQrDataUrl = ref('');
 const loading = ref(true);
 const txnRef = ref('');
 const verifyingPayment = ref(false);
+
+// Live Notifications & Alerts State
+const prevOrderStatus = ref(null);
+const prevPaymentStatus = ref(null);
+const customerToast = ref(null);
+const customerAlertsEnabled = ref(false);
+let toastTimer = null;
+
+const enableCustomerAlerts = async () => {
+  playSound('status_update');
+  await requestNotificationPermission();
+  customerAlertsEnabled.value = true;
+};
+
+const showToast = (toastObj) => {
+  customerToast.value = toastObj;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    customerToast.value = null;
+  }, 7000);
+};
 
 // --- 2-Game Tournament State ---
 const showGameModal = ref(false);
@@ -846,18 +899,65 @@ const fetchOrder = async () => {
     const code = route.params.orderCode;
     const res = await axios.get(`/orders/${code}`);
     if (res.data.success) {
-      order.value = res.data.order;
+      const incoming = res.data.order;
       upiString.value = res.data.upi_string;
 
-      if (order.value.customer_name) {
-        localStorage.setItem('qrmenu_customer_name', order.value.customer_name);
+      if (incoming.customer_name) {
+        localStorage.setItem('qrmenu_customer_name', incoming.customer_name);
       }
-      if (order.value.customer_phone) {
-        localStorage.setItem('qrmenu_customer_phone', order.value.customer_phone);
+      if (incoming.customer_phone) {
+        localStorage.setItem('qrmenu_customer_phone', incoming.customer_phone);
       }
-      if (order.value.table_number && order.value.restaurant_id) {
-        localStorage.setItem(`qrmenu_active_table_${order.value.restaurant_id}`, order.value.table_number);
+      if (incoming.table_number && incoming.restaurant_id) {
+        localStorage.setItem(`qrmenu_active_table_${incoming.restaurant_id}`, incoming.table_number);
       }
+
+      // Detect Live Food Status Updates
+      if (prevOrderStatus.value && prevOrderStatus.value !== incoming.order_status) {
+        playSound('status_update');
+
+        if (incoming.order_status === 'preparing') {
+          showToast({
+            icon: 'fa-solid fa-fire-burner',
+            title: 'Cooking in Progress! 👨‍🍳',
+            message: 'Chef has started preparing your order in the kitchen.',
+            color: 'bg-orange-500',
+          });
+          sendSystemNotification('Cooking Started! 👨‍🍳', 'Chef is now preparing your food in the kitchen.');
+        } else if (incoming.order_status === 'ready') {
+          showToast({
+            icon: 'fa-solid fa-bell',
+            title: 'Your Food is Ready! 🔔',
+            message: 'Your dishes are prepared and on the way to your table!',
+            color: 'bg-purple-600',
+          });
+          sendSystemNotification('Food Ready! 🔔', 'Your meal is freshly prepared and ready!');
+        } else if (['completed', 'served'].includes(incoming.order_status)) {
+          showToast({
+            icon: 'fa-solid fa-utensils',
+            title: 'Order Served! 🎉',
+            message: 'Your order has been served. Enjoy your delicious food!',
+            color: 'bg-emerald-600',
+          });
+          sendSystemNotification('Order Served! 🎉', 'Your order is served. Enjoy your meal!');
+        }
+      }
+
+      // Detect Live Payment Status Updates
+      if (prevPaymentStatus.value && prevPaymentStatus.value !== 'paid' && incoming.payment_status === 'paid') {
+        playSound('payment_success');
+        showToast({
+          icon: 'fa-solid fa-circle-check',
+          title: 'Payment Completed! 💰',
+          message: `Payment of ${incoming.restaurant?.currency || '₹'}${incoming.total_amount} successfully received!`,
+          color: 'bg-emerald-600',
+        });
+        sendSystemNotification('Payment Completed! 💰', `Payment of ${incoming.restaurant?.currency || '₹'}${incoming.total_amount} confirmed.`);
+      }
+
+      prevOrderStatus.value = incoming.order_status;
+      prevPaymentStatus.value = incoming.payment_status;
+      order.value = incoming;
 
       if (upiString.value && order.value.payment_status !== 'paid') {
         renderQr();
