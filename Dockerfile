@@ -10,9 +10,7 @@ RUN apk add --no-cache \
     unzip \
     sqlite-dev \
     mysql-client \
-    oniguruma-dev \
-    nodejs \
-    npm
+    oniguruma-dev
 
 RUN docker-php-ext-install pdo pdo_mysql pdo_sqlite mbstring zip
 
@@ -21,14 +19,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copy application files
+# Copy application files (including pre-compiled frontend assets in public/build)
 COPY . /var/www
 
-# Prepare environment and install dependencies
+# Prepare environment and install PHP dependencies cleanly
 RUN cp .env.example .env && \
-    composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev --ignore-platform-reqs && \
-    npm install && \
-    npm run build
+    composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev --no-scripts --ignore-platform-reqs && \
+    composer dump-autoload --optimize
 
 EXPOSE 8000
 
