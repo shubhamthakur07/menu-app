@@ -1962,25 +1962,31 @@ const fetchTables = async () => {
 };
 
 const vacateTable = async (tableId) => {
+  const tbl = tables.value.find(t => t.id === tableId);
+  if (tbl) {
+    tbl.status = 'available';
+    tbl.active_orders = [];
+    tbl.orders_count = 0;
+    tbl.table_total_amount = 0;
+  }
   try {
-    const res = await axios.patch(`/owner/tables/${tableId}/vacate`);
-    if (res.data.success) {
-      await fetchTables();
-    }
+    await axios.patch(`/owner/tables/${tableId}/vacate`);
   } catch (err) {
     console.error('Failed to vacate table', err);
+    await fetchTables();
   }
 };
 
 const deleteTable = async (tableId) => {
   if (!confirm('Are you sure you want to delete this table?')) return;
+  const origTables = [...tables.value];
+  tables.value = tables.value.filter(t => t.id !== tableId);
   try {
-    const res = await axios.delete(`/owner/tables/${tableId}`);
-    if (res.data.success) {
-      await fetchTables();
-    }
+    await axios.delete(`/owner/tables/${tableId}`);
   } catch (err) {
+    tables.value = origTables;
     console.error('Failed to delete table', err);
+    alert('Failed to delete table.');
   }
 };
 
@@ -1990,7 +1996,17 @@ const saveNewTable = async () => {
     if (res.data.success) {
       showAddTableModal.value = false;
       newTableForm.value = { name: '', code: '', seating_capacity: 4 };
-      await fetchTables();
+      if (res.data.table) {
+        tables.value.push({
+          ...res.data.table,
+          status: 'available',
+          active_orders: [],
+          orders_count: 0,
+          table_total_amount: 0,
+        });
+      } else {
+        await fetchTables();
+      }
     }
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to add table');
@@ -2069,33 +2085,50 @@ const openDishModal = (dish) => {
 const saveDish = async () => {
   try {
     if (editingDishId.value) {
-      await axios.put(`/owner/menu-items/${editingDishId.value}`, dishForm.value);
+      const res = await axios.put(`/owner/menu-items/${editingDishId.value}`, dishForm.value);
+      if (res.data.success && res.data.item) {
+        const idx = menuItems.value.findIndex(i => i.id === editingDishId.value);
+        if (idx !== -1) {
+          menuItems.value[idx] = res.data.item;
+        }
+      }
     } else {
-      await axios.post('/owner/menu-items', dishForm.value);
+      const res = await axios.post('/owner/menu-items', dishForm.value);
+      if (res.data.success && res.data.item) {
+        menuItems.value.unshift(res.data.item);
+      }
     }
     showDishModal.value = false;
-    await fetchMenuItems();
   } catch (err) {
     console.error('Failed to save dish', err);
+    alert(err.response?.data?.message || 'Failed to save item');
   }
 };
 
 const toggleAvailability = async (id) => {
+  const item = menuItems.value.find(i => i.id === id);
+  if (!item) return;
+  // Instant optimistic update (0ms delay)
+  item.is_available = !item.is_available;
   try {
     await axios.patch(`/owner/menu-items/${id}/toggle-availability`);
-    await fetchMenuItems();
   } catch (err) {
+    item.is_available = !item.is_available;
     console.error('Failed to toggle availability', err);
   }
 };
 
 const deleteMenuItem = async (id) => {
   if (!confirm('Are you sure you want to delete this menu dish?')) return;
+  const original = [...menuItems.value];
+  // Instant optimistic remove (0ms delay)
+  menuItems.value = menuItems.value.filter(i => i.id !== id);
   try {
     await axios.delete(`/owner/menu-items/${id}`);
-    await fetchMenuItems();
   } catch (err) {
+    menuItems.value = original;
     console.error('Failed to delete item', err);
+    alert('Failed to delete item.');
   }
 };
 
@@ -2114,25 +2147,40 @@ const openCategoryModal = (cat) => {
 const saveCategory = async () => {
   try {
     if (editingCategoryId.value) {
-      await axios.put(`/owner/categories/${editingCategoryId.value}`, categoryForm.value);
+      const res = await axios.put(`/owner/categories/${editingCategoryId.value}`, categoryForm.value);
+      if (res.data.success && res.data.category) {
+        const idx = categories.value.findIndex(c => c.id === editingCategoryId.value);
+        if (idx !== -1) {
+          categories.value[idx] = { ...categories.value[idx], ...res.data.category };
+        }
+      }
     } else {
-      await axios.post('/owner/categories', categoryForm.value);
+      const res = await axios.post('/owner/categories', categoryForm.value);
+      if (res.data.success && res.data.category) {
+        categories.value.push(res.data.category);
+      }
     }
     showCategoryModal.value = false;
-    await fetchCategories();
   } catch (err) {
     console.error('Failed to save category', err);
+    alert(err.response?.data?.message || 'Failed to save category');
   }
 };
 
 const deleteCategory = async (id) => {
   if (!confirm('Are you sure you want to delete this category? All its dishes will also be removed.')) return;
+  const origCats = [...categories.value];
+  const origItems = [...menuItems.value];
+  // Instant optimistic remove (0ms delay)
+  categories.value = categories.value.filter(c => c.id !== id);
+  menuItems.value = menuItems.value.filter(i => i.category_id !== id);
   try {
     await axios.delete(`/owner/categories/${id}`);
-    await fetchCategories();
-    await fetchMenuItems();
   } catch (err) {
+    categories.value = origCats;
+    menuItems.value = origItems;
     console.error('Failed to delete category', err);
+    alert('Failed to delete category.');
   }
 };
 
