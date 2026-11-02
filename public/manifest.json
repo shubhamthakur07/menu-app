@@ -1,6 +1,7 @@
 {
   "name": "QRMenu - Smart QR Menu & Booking System",
   "short_name": "QRMenu",
+  "id": "/",
   "description": "Multi-business QR Menu, table ordering, salon slot booking and instant UPI payment system.",
   "start_url": "/",
   "display": "standalone",
