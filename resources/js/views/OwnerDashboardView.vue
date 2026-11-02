@@ -1946,6 +1946,16 @@ watch(currentTableUrl, () => {
   generateQrCode();
 }, { immediate: true });
 
+// Lazy load dishes and categories when their tabs are opened
+watch(activeTab, (tab) => {
+  if (tab === 'dishes' && menuItems.value.length === 0) {
+    fetchMenuItems();
+    if (categories.value.length === 0) fetchCategories();
+  } else if (tab === 'categories' && categories.value.length === 0) {
+    fetchCategories();
+  }
+});
+
 const fetchDashboardData = async () => {
   try {
     const res = await axios.get('/owner/restaurant');
@@ -1956,8 +1966,6 @@ const fetchDashboardData = async () => {
 
       await Promise.all([
         fetchOrders(),
-        fetchCategories(),
-        fetchMenuItems(),
         fetchTables(),
       ]);
 
@@ -2092,33 +2100,61 @@ const saveBulkTables = async () => {
   }
 };
 
-// Order Status Updates
+// Order Status Updates (Optimistic UI - 0ms instant response)
 const updateOrderStatus = async (orderId, newStatus) => {
+  const target = orders.value.data?.find(o => o.id === orderId);
+  const oldStatus = target ? target.order_status : null;
+
+  // 1. Immediately update UI in 0ms!
+  if (target) {
+    target.order_status = newStatus;
+  }
+
+  // Update table in local memory if order is completed or cancelled
+  if (target && (newStatus === 'completed' || newStatus === 'cancelled')) {
+    const tableMatch = tables.value.find(t => t.name === target.table_number);
+    if (tableMatch) {
+      tableMatch.orders_count = Math.max(0, (tableMatch.orders_count || 1) - 1);
+      if (tableMatch.orders_count === 0) {
+        tableMatch.status = 'available';
+      }
+    }
+    if (stats.value && stats.value.active_orders_count > 0) {
+      stats.value.active_orders_count--;
+    }
+  }
+
+  // 2. Background sync (single PATCH request, no re-fetching overhead)
   try {
-    const res = await axios.patch(`/owner/orders/${orderId}/status`, {
+    await axios.patch(`/owner/orders/${orderId}/status`, {
       order_status: newStatus,
     });
-    if (res.data.success) {
-      await fetchOrders();
-      await fetchTables();
-      // refresh stats
-      const restRes = await axios.get('/owner/restaurant');
-      if (restRes.data.success) stats.value = restRes.data.stats;
-    }
   } catch (err) {
+    if (target && oldStatus) {
+      target.order_status = oldStatus;
+    }
     console.error('Failed to update status', err);
   }
 };
 
 const markOrderPaid = async (orderId) => {
+  const target = orders.value.data?.find(o => o.id === orderId);
+  const oldPaidStatus = target ? target.payment_status : 'pending';
+
+  // 1. Immediately update UI in 0ms!
+  if (target) {
+    target.payment_status = 'paid';
+  }
+
+  // 2. Background sync
   try {
-    const res = await axios.patch(`/owner/orders/${orderId}/status`, {
+    await axios.patch(`/owner/orders/${orderId}/status`, {
       payment_status: 'paid',
     });
-    if (res.data.success) {
-      await fetchOrders();
-    }
   } catch (err) {
+    if (target) {
+      target.payment_status = oldPaidStatus;
+    }
     console.error('Failed to mark paid', err);
   }
 };

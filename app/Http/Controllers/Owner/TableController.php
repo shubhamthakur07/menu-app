@@ -29,11 +29,6 @@ class TableController extends Controller
                 $activeOrders = $table->activeOrders;
                 $isOccupied = $activeOrders->count() > 0 || $table->status === 'occupied';
 
-                // Automatically keep status synced
-                if ($isOccupied && $table->status !== 'occupied') {
-                    $table->update(['status' => 'occupied']);
-                }
-
                 return [
                     'id' => $table->id,
                     'restaurant_id' => $table->restaurant_id,
