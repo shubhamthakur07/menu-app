@@ -1,5 +1,31 @@
 <template>
   <div class="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <!-- Live New Order Popup Banner & Notification Alert -->
+    <transition enter-active-class="transform transition ease-out duration-300" enter-from-class="translate-y-[-100%] opacity-0" enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div
+        v-if="newOrderToast"
+        class="fixed top-4 right-4 z-50 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 px-4 py-3 rounded-2xl shadow-2xl border-2 border-white/80 flex items-center gap-3"
+      >
+        <div class="w-10 h-10 rounded-xl bg-slate-950 text-amber-400 flex items-center justify-center font-extrabold text-lg shadow">
+          <i class="fa-solid fa-bell animate-bounce"></i>
+        </div>
+        <div>
+          <div class="font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
+            <span>New Order Received!</span>
+            <span class="bg-slate-950 text-white text-[9px] px-1.5 py-0.2 rounded font-mono">Live</span>
+          </div>
+          <div class="text-xs font-bold mt-0.5">
+            #{{ newOrderToast.order_code }} • {{ newOrderToast.table_number || (newOrderToast.order_type === 'delivery' ? 'Home Delivery' : 'Takeaway') }} • {{ restaurant?.currency }}{{ newOrderToast.total_amount }}
+          </div>
+          <div class="text-[10px] text-slate-900 font-semibold truncate max-w-[200px]">
+            {{ newOrderToast.customer_name }} ({{ newOrderToast.customer_phone }})
+          </div>
+        </div>
+        <button @click="newOrderToast = null" class="w-6 h-6 rounded-full bg-slate-950/20 hover:bg-slate-950/40 text-slate-950 flex items-center justify-center transition cursor-pointer ml-1">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+    </transition>
     <!-- Top Header / Bar -->
     <header class="bg-slate-950/80 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -1733,7 +1759,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import QRCode from 'qrcode';
@@ -1750,6 +1776,7 @@ const categories = ref([]);
 const menuItems = ref([]);
 const orderStatusFilter = ref('all');
 const updatingOrderId = ref(null);
+const newOrderToast = ref(null);
 
 // Modals
 const showDishModal = ref(false);
@@ -1995,7 +2022,43 @@ const fetchDashboardData = async () => {
   }
 };
 
-const fetchOrders = async () => {
+let toastTimer = null;
+const showNewOrderToast = (order) => {
+  newOrderToast.value = order;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    newOrderToast.value = null;
+  }, 6000);
+};
+
+const playNewOrderChime = () => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.setValueAtTime(1320, now + 0.15);
+
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.6);
+  } catch (e) {
+    // Audio autoplay restrictions fallback
+  }
+};
+
+const fetchOrders = async (silent = false) => {
   try {
     const params = {};
     if (orderStatusFilter.value !== 'all') {
@@ -2003,10 +2066,53 @@ const fetchOrders = async () => {
     }
     const res = await axios.get('/owner/orders', { params });
     if (res.data.success) {
-      orders.value = res.data.orders.data || res.data.orders;
+      const incoming = res.data.orders.data || res.data.orders || [];
+
+      // Check if new orders arrived compared to current list
+      if (orders.value.length > 0 && incoming.length > 0) {
+        const existingIds = new Set(orders.value.map(o => o.id));
+        const brandNewOrders = incoming.filter(o => !existingIds.has(o.id));
+        if (brandNewOrders.length > 0) {
+          playNewOrderChime();
+          showNewOrderToast(brandNewOrders[0]);
+        }
+      }
+
+      orders.value = incoming;
+
+      // Update active orders count in stats
+      const pendingOrActiveCount = incoming.filter(o => ['pending', 'accepted', 'preparing', 'ready'].includes(o.order_status)).length;
+      if (stats.value) {
+        stats.value.active_orders_count = pendingOrActiveCount;
+      }
     }
   } catch (err) {
-    console.error('Failed to load orders', err);
+    if (!silent) console.error('Failed to load orders', err);
+  }
+};
+
+// Automatic Real-Time Polling for New Orders
+let orderPollTimer = null;
+let isPolling = false;
+
+const startAutoPoll = () => {
+  stopAutoPoll();
+  orderPollTimer = setInterval(async () => {
+    // Only poll when tab is visible and not already running an active request
+    if (document.hidden || isPolling) return;
+    isPolling = true;
+    try {
+      await fetchOrders(true);
+    } finally {
+      isPolling = false;
+    }
+  }, 4000); // Polls every 4 seconds
+};
+
+const stopAutoPoll = () => {
+  if (orderPollTimer) {
+    clearInterval(orderPollTimer);
+    orderPollTimer = null;
   }
 };
 
@@ -2385,6 +2491,11 @@ const formatOrderTime = (dateStr) => {
 
 onMounted(() => {
   fetchDashboardData();
+  startAutoPoll();
+});
+
+onUnmounted(() => {
+  stopAutoPoll();
 });
 </script>
 
