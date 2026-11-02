@@ -374,42 +374,56 @@
                   <button
                     v-if="order.order_status === 'pending'"
                     @click="updateOrderStatus(order.id, 'accepted')"
-                    class="py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                    :disabled="updatingOrderId === order.id"
+                    class="py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                   >
-                    <i class="fa-solid fa-check"></i> {{ restaurant?.business_type === 'salon' ? 'Accept Booking' : 'Accept Order' }}
+                    <i v-if="updatingOrderId === order.id" class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <i v-else class="fa-solid fa-check"></i>
+                    <span>{{ restaurant?.business_type === 'salon' ? 'Accept Booking' : 'Accept Order' }}</span>
                   </button>
 
                   <button
                     v-if="['pending', 'accepted'].includes(order.order_status)"
                     @click="updateOrderStatus(order.id, 'preparing')"
-                    class="py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                    :disabled="updatingOrderId === order.id"
+                    class="py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                   >
-                    <i :class="restaurant?.business_type === 'salon' ? 'fa-solid fa-scissors' : 'fa-solid fa-fire-burner'"></i>
-                    {{ restaurant?.business_type === 'salon' ? 'In Chair (Styling)' : 'In Kitchen' }}
+                    <i v-if="updatingOrderId === order.id" class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <i v-else :class="restaurant?.business_type === 'salon' ? 'fa-solid fa-scissors' : 'fa-solid fa-fire-burner'"></i>
+                    <span>{{ restaurant?.business_type === 'salon' ? 'In Chair (Styling)' : 'In Kitchen' }}</span>
                   </button>
 
                   <button
                     v-if="order.order_status === 'preparing'"
                     @click="updateOrderStatus(order.id, 'ready')"
-                    class="py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                    :disabled="updatingOrderId === order.id"
+                    class="py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                   >
-                    <i class="fa-solid fa-bell"></i> {{ restaurant?.business_type === 'salon' ? 'Styling Finished' : 'Food Ready' }}
+                    <i v-if="updatingOrderId === order.id" class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <i v-else class="fa-solid fa-bell"></i>
+                    <span>{{ restaurant?.business_type === 'salon' ? 'Styling Finished' : 'Food Ready' }}</span>
                   </button>
 
                   <button
                     v-if="['ready', 'preparing'].includes(order.order_status)"
                     @click="updateOrderStatus(order.id, 'completed')"
-                    class="py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                    :disabled="updatingOrderId === order.id"
+                    class="py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                   >
-                    <i class="fa-solid fa-check-double"></i> Served
+                    <i v-if="updatingOrderId === order.id" class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <i v-else class="fa-solid fa-check-double"></i>
+                    <span>Served</span>
                   </button>
 
                   <button
                     v-if="order.payment_status !== 'paid'"
                     @click="markOrderPaid(order.id)"
-                    class="py-2 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1"
+                    :disabled="updatingOrderId === order.id"
+                    class="py-2 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                   >
-                    <i class="fa-solid fa-money-bill-check"></i> Mark Paid
+                    <i v-if="updatingOrderId === order.id" class="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <i v-else class="fa-solid fa-money-bill-check"></i>
+                    <span>Mark Paid</span>
                   </button>
                 </div>
               </div>
@@ -1735,6 +1749,7 @@ const orders = ref([]);
 const categories = ref([]);
 const menuItems = ref([]);
 const orderStatusFilter = ref('all');
+const updatingOrderId = ref(null);
 
 // Modals
 const showDishModal = ref(false);
@@ -2102,7 +2117,8 @@ const saveBulkTables = async () => {
 
 // Order Status Updates (Optimistic UI - 0ms instant response)
 const updateOrderStatus = async (orderId, newStatus) => {
-  const target = orders.value.data?.find(o => o.id === orderId);
+  const orderList = Array.isArray(orders.value) ? orders.value : (orders.value?.data || []);
+  const target = orderList.find(o => o.id === orderId);
   const oldStatus = target ? target.order_status : null;
 
   // 1. Immediately update UI in 0ms!
@@ -2124,21 +2140,29 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }
   }
 
+  updatingOrderId.value = orderId;
+
   // 2. Background sync (single PATCH request, no re-fetching overhead)
   try {
-    await axios.patch(`/owner/orders/${orderId}/status`, {
+    const res = await axios.patch(`/owner/orders/${orderId}/status`, {
       order_status: newStatus,
     });
+    if (res.data.success && res.data.order && target) {
+      Object.assign(target, res.data.order);
+    }
   } catch (err) {
     if (target && oldStatus) {
       target.order_status = oldStatus;
     }
     console.error('Failed to update status', err);
+  } finally {
+    updatingOrderId.value = null;
   }
 };
 
 const markOrderPaid = async (orderId) => {
-  const target = orders.value.data?.find(o => o.id === orderId);
+  const orderList = Array.isArray(orders.value) ? orders.value : (orders.value?.data || []);
+  const target = orderList.find(o => o.id === orderId);
   const oldPaidStatus = target ? target.payment_status : 'pending';
 
   // 1. Immediately update UI in 0ms!
@@ -2146,16 +2170,23 @@ const markOrderPaid = async (orderId) => {
     target.payment_status = 'paid';
   }
 
+  updatingOrderId.value = orderId;
+
   // 2. Background sync
   try {
-    await axios.patch(`/owner/orders/${orderId}/status`, {
+    const res = await axios.patch(`/owner/orders/${orderId}/status`, {
       payment_status: 'paid',
     });
+    if (res.data.success && res.data.order && target) {
+      Object.assign(target, res.data.order);
+    }
   } catch (err) {
     if (target) {
       target.payment_status = oldPaidStatus;
     }
     console.error('Failed to mark paid', err);
+  } finally {
+    updatingOrderId.value = null;
   }
 };
 
