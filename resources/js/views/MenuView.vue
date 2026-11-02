@@ -109,6 +109,7 @@
               </button>
 
               <button
+                v-if="restaurant.enable_home_delivery !== false"
                 @click="setOrderType('delivery')"
                 :class="[
                   'px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5',
@@ -119,6 +120,7 @@
               </button>
 
               <button
+                v-if="restaurant.enable_takeaway !== false"
                 @click="setOrderType('takeaway')"
                 :class="[
                   'px-3 py-1.5 rounded-lg font-bold text-xs transition flex items-center gap-1.5',
@@ -1177,6 +1179,14 @@ const fetchMenu = async () => {
         // Set first available table if possible
         const freeTable = restaurant.value.tables.find(t => t.status === 'available');
         currentTable.value = freeTable ? freeTable.name : restaurant.value.tables[0].name;
+      }
+
+      // Default order type fallback if disabled
+      if (restaurant.value.enable_home_delivery === false && orderType.value === 'delivery') {
+        orderType.value = 'dine_in';
+      }
+      if (restaurant.value.enable_takeaway === false && orderType.value === 'takeaway') {
+        orderType.value = 'dine_in';
       }
 
       // Default payment method according to restaurant policy

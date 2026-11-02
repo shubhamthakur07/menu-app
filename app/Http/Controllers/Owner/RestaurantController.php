@@ -73,6 +73,8 @@ class RestaurantController extends Controller
             'tax_percentage' => 'required|numeric|min:0|max:100',
             'enable_online_payment' => 'boolean',
             'enable_cash_payment' => 'boolean',
+            'enable_home_delivery' => 'boolean',
+            'enable_takeaway' => 'boolean',
             'allow_shared_table_orders' => 'boolean',
             'is_active' => 'boolean',
         ]);

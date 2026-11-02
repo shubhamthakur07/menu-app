@@ -39,20 +39,36 @@ class OrderController extends Controller
 
         $orderType = $validated['order_type'] ?? 'dine_in';
 
-        // Home delivery requires address
-        if ($orderType === 'delivery' && empty(trim($validated['delivery_address'] ?? ''))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please provide your home delivery address.',
-            ], 422);
-        }
-
         $restaurant = Restaurant::findOrFail($validated['restaurant_id']);
 
         if (!$restaurant->is_active) {
             return response()->json([
                 'success' => false,
                 'message' => 'This restaurant is currently closed.',
+            ], 422);
+        }
+
+        // Validate Home Delivery availability
+        if ($orderType === 'delivery') {
+            if ($restaurant->enable_home_delivery === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Home delivery is currently disabled by this restaurant.',
+                ], 422);
+            }
+            if (empty(trim($validated['delivery_address'] ?? ''))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please provide your home delivery address.',
+                ], 422);
+            }
+        }
+
+        // Validate Takeaway availability
+        if ($orderType === 'takeaway' && $restaurant->enable_takeaway === false) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Takeaway ordering is currently disabled by this restaurant.',
             ], 422);
         }
 

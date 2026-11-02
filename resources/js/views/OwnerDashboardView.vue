@@ -986,6 +986,73 @@
                 <span>Online payment is disabled. Customers will browse the digital menu and place orders, while payment will be settled in-person at the counter or table.</span>
               </div>
 
+              <!-- Order Types & Fulfillment Options (Home Delivery & Takeaway) -->
+              <div v-if="settingsForm.business_type !== 'salon'" class="pt-4 border-t border-slate-700/80 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-truck-ramp-box"></i> Order Types & Delivery Modes
+                  </h3>
+                </div>
+
+                <div class="space-y-3">
+                  <!-- Toggle: Home Delivery -->
+                  <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                    <label class="flex items-center justify-between cursor-pointer gap-3">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <i class="fa-solid fa-motorcycle text-blue-400"></i>
+                          <span class="text-xs font-bold text-white">Home Delivery Service</span>
+                          <span
+                            :class="[
+                              'text-[10px] font-extrabold px-2 py-0.5 rounded-full',
+                              settingsForm.enable_home_delivery ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400'
+                            ]"
+                          >
+                            {{ settingsForm.enable_home_delivery ? 'ENABLED' : 'DISABLED' }}
+                          </span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 block mt-1">
+                          Turn ON to let customers order from home/office and enter their delivery address. Turn OFF if your restaurant only does Dine-In.
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        v-model="settingsForm.enable_home_delivery"
+                        class="w-5 h-5 accent-blue-500 rounded cursor-pointer shrink-0"
+                      />
+                    </label>
+                  </div>
+
+                  <!-- Toggle: Takeaway / Pickup -->
+                  <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                    <label class="flex items-center justify-between cursor-pointer gap-3">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <i class="fa-solid fa-bag-shopping text-purple-400"></i>
+                          <span class="text-xs font-bold text-white">Takeaway / Self-Pickup</span>
+                          <span
+                            :class="[
+                              'text-[10px] font-extrabold px-2 py-0.5 rounded-full',
+                              settingsForm.enable_takeaway ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400'
+                            ]"
+                          >
+                            {{ settingsForm.enable_takeaway ? 'ENABLED' : 'DISABLED' }}
+                          </span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 block mt-1">
+                          Allow customers to order takeaway parcels in advance and collect at your counter.
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        v-model="settingsForm.enable_takeaway"
+                        class="w-5 h-5 accent-purple-500 rounded cursor-pointer shrink-0"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label class="block text-xs font-semibold text-slate-300 mb-1">Tax / GST Percentage (%)</label>

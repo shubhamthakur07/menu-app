@@ -33,6 +33,8 @@ class Restaurant extends Model
         'tax_percentage',
         'enable_online_payment',
         'enable_cash_payment',
+        'enable_home_delivery',
+        'enable_takeaway',
         'allow_shared_table_orders',
         'is_active',
     ];
@@ -42,6 +44,8 @@ class Restaurant extends Model
         return [
             'enable_online_payment' => 'boolean',
             'enable_cash_payment' => 'boolean',
+            'enable_home_delivery' => 'boolean',
+            'enable_takeaway' => 'boolean',
             'allow_shared_table_orders' => 'boolean',
             'is_active' => 'boolean',
             'tax_percentage' => 'float',
