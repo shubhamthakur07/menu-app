@@ -66,6 +66,17 @@
             <span class="hidden sm:inline">Open Live Menu</span>
           </a>
 
+          <!-- User Guide & PDF Manual -->
+          <a
+            href="/guide.html"
+            target="_blank"
+            class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-amber-400 border border-slate-700 hover:border-amber-500/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            title="Open Complete User Guide & Download PDF"
+          >
+            <i class="fa-solid fa-book-open text-amber-400"></i>
+            <span class="hidden sm:inline">Guide & PDF</span>
+          </a>
+
           <!-- Live Alerts & Sound Toggle Button -->
           <button
             @click="toggleNotificationAlerts"
