@@ -11,6 +11,8 @@ use App\Http\Controllers\Owner\RestaurantController;
 use App\Http\Controllers\PublicMenuController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/ping', fn () => response()->json(['status' => 'ok', 'time' => time()]));
+
 /*
 |--------------------------------------------------------------------------
 | Public Customer Routes

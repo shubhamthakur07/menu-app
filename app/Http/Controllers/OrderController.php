@@ -138,14 +138,20 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate subtotal from DB
+            // Calculate subtotal from DB in 1 single bulk query
             $subtotal = 0;
             $orderItemsData = [];
+            $itemIds = array_column($validated['items'], 'id');
+            $menuItems = MenuItem::where('restaurant_id', $restaurant->id)
+                ->whereIn('id', $itemIds)
+                ->get()
+                ->keyBy('id');
 
             foreach ($validated['items'] as $itemData) {
-                $menuItem = MenuItem::where('restaurant_id', $restaurant->id)
-                    ->where('id', $itemData['id'])
-                    ->firstOrFail();
+                $menuItem = $menuItems->get($itemData['id']);
+                if (!$menuItem) {
+                    throw new \Exception("Item #{$itemData['id']} not found or unavailable.");
+                }
 
                 $itemQty = (int) $itemData['quantity'];
                 $itemSubtotal = $menuItem->price * $itemQty;
