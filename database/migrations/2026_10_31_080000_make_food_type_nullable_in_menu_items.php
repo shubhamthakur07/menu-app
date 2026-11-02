@@ -9,11 +9,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE menu_items MODIFY food_type VARCHAR(50) NULL DEFAULT 'veg'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE menu_items MODIFY food_type VARCHAR(50) NULL DEFAULT 'veg'");
+        } else {
+            Schema::table('menu_items', function (Blueprint $table) {
+                $table->string('food_type', 50)->nullable()->default('veg')->change();
+            });
+        }
 
         if (!Schema::hasColumn('menu_items', 'target_audience')) {
             Schema::table('menu_items', function (Blueprint $table) {
-                $table->string('target_audience', 50)->nullable()->default('all')->after('duration_minutes');
+                $table->string('target_audience', 50)->nullable()->default('all');
             });
         }
     }
