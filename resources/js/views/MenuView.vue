@@ -131,9 +131,14 @@
 
             <!-- Current Dining Location Pill -->
             <div class="flex items-center gap-2">
-              <div v-if="orderType === 'dine_in'" class="flex items-center gap-1.5 bg-amber-500/20 text-amber-300 px-3 py-1.5 rounded-xl border border-amber-500/40 font-semibold">
+              <div
+                v-if="orderType === 'dine_in'"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-semibold text-xs transition"
+                :class="selectedTableIsOccupied ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'"
+              >
                 <i class="fa-solid fa-chair text-xs"></i>
                 <span>{{ currentTable || 'Select Table' }}</span>
+                <span v-if="selectedTableIsOccupied" class="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold ml-1">Occupied</span>
                 <button @click="showChangeTableModal = true" class="ml-1 text-[11px] text-white underline hover:text-amber-200 font-bold cursor-pointer">
                   Change
                 </button>
@@ -423,20 +428,20 @@
           <!-- Modal Body -->
           <div class="p-4 overflow-y-auto space-y-4 flex-1">
             <!-- Active Table Alert if Table is already occupied -->
-            <div v-if="orderType === 'dine_in' && selectedTableIsOccupied" class="bg-amber-50 border border-amber-300 rounded-2xl p-3 text-xs text-amber-950">
-              <div class="flex items-center gap-2 font-bold text-amber-900 mb-1">
-                <i class="fa-solid fa-users text-amber-600"></i>
-                <span>Table {{ currentTable }} currently has an active order!</span>
+            <div v-if="orderType === 'dine_in' && selectedTableIsOccupied" class="bg-rose-50 border border-rose-300 rounded-2xl p-3.5 text-xs text-rose-950">
+              <div class="flex items-center gap-2 font-bold text-rose-900 mb-1">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                <span>{{ currentTable }} is currently occupied with active diners!</span>
               </div>
-              <p class="text-[11px] text-amber-800 leading-relaxed">
-                If you are sharing this table with your group, this order will be added to <strong>{{ currentTable }}</strong>'s running bill. If you are seated at a different table, please switch your table.
+              <p class="text-[11px] text-rose-800 leading-relaxed">
+                This table cannot accept a new order right now. Please select an available free table or ask hotel staff to allocate a table.
               </p>
               <button
                 type="button"
                 @click="showChangeTableModal = true; showCheckoutModal = false"
-                class="mt-2 px-3 py-1 bg-white border border-amber-300 text-amber-900 rounded-lg font-bold text-[10px] hover:bg-amber-100 transition inline-flex items-center gap-1"
+                class="mt-2.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <i class="fa-solid fa-chair text-amber-600"></i> Change Table
+                <i class="fa-solid fa-chair"></i> Select an Available Table
               </button>
             </div>
 
@@ -609,10 +614,13 @@
           <div class="p-4 border-t border-slate-200 bg-white">
             <button
               @click="submitOrder"
-              :disabled="submittingOrder"
-              class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50"
+              :disabled="submittingOrder || (orderType === 'dine_in' && selectedTableIsOccupied)"
+              class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <i v-if="submittingOrder" class="fa-solid fa-circle-notch fa-spin"></i>
+              <span v-else-if="orderType === 'dine_in' && selectedTableIsOccupied">
+                Table Occupied — Select Available Table
+              </span>
               <span v-else>Confirm & Pay {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}</span>
             </button>
           </div>
@@ -649,15 +657,18 @@
               v-for="tbl in dynamicTables"
               :key="tbl.id"
               @click="selectTable(tbl)"
+              :disabled="tbl.status === 'occupied'"
               :class="[
                 'p-3 rounded-2xl text-left transition border flex flex-col justify-between relative',
-                currentTable === tbl.name
-                  ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/30'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
+                tbl.status === 'occupied'
+                  ? 'border-rose-200 bg-rose-50/70 opacity-70 cursor-not-allowed'
+                  : currentTable === tbl.name
+                    ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/30 cursor-pointer shadow-sm'
+                    : 'border-slate-200 bg-white hover:border-slate-300 cursor-pointer'
               ]"
             >
               <div class="flex items-center justify-between mb-1">
-                <span class="font-extrabold text-xs text-slate-900">{{ tbl.name }}</span>
+                <span class="font-extrabold text-xs" :class="tbl.status === 'occupied' ? 'text-slate-500' : 'text-slate-900'">{{ tbl.name }}</span>
                 <span
                   :class="[
                     'w-2 h-2 rounded-full',
@@ -667,29 +678,30 @@
                 ></span>
               </div>
 
-              <div class="flex items-center justify-between text-[10px] text-slate-400">
-                <span>{{ tbl.seating_capacity }} Seater</span>
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="text-slate-400">{{ tbl.seating_capacity }} Seater</span>
                 <span :class="tbl.status === 'occupied' ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold'">
-                  {{ tbl.status === 'occupied' ? 'Busy' : 'Free' }}
+                  {{ tbl.status === 'occupied' ? 'Occupied' : 'Available' }}
                 </span>
               </div>
             </button>
           </div>
 
           <!-- Occupied Table Alert if selected table is occupied -->
-          <div v-if="selectedTableIsOccupied" class="p-3 mb-3 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
-            <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+          <div v-if="selectedTableIsOccupied" class="p-3 mb-3 bg-rose-50 border border-rose-300 rounded-xl text-[11px] text-rose-900 flex items-start gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5"></i>
             <div>
-              <span class="font-bold">{{ currentTable }} already has an active order.</span>
-              <p class="text-[10px] text-amber-800 mt-0.5">If you are seated at this table and adding more items, proceed ahead. Otherwise, select any vacant table.</p>
+              <span class="font-bold">{{ currentTable }} is currently occupied with active diners.</span>
+              <p class="text-[10px] text-rose-800 mt-0.5">Please choose an available (Free) table from the green options above to place your order.</p>
             </div>
           </div>
 
           <button
             @click="showChangeTableModal = false"
-            class="w-full py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition"
+            :disabled="selectedTableIsOccupied || !currentTable"
+            class="w-full py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirm {{ currentTable }}
+            {{ selectedTableIsOccupied ? 'Please Choose an Available Table' : `Confirm ${currentTable}` }}
           </button>
         </div>
       </div>
@@ -1226,7 +1238,9 @@ const resetFilters = () => {
 };
 
 const selectTable = (tableObj) => {
+  if (tableObj.status === 'occupied') return;
   currentTable.value = tableObj.name;
+  showChangeTableModal.value = false;
 };
 
 // Filtered categories & items
@@ -1322,6 +1336,10 @@ const submitOrder = async () => {
   }
   if (orderType.value === 'delivery' && !customerForm.value.address.trim()) {
     orderError.value = 'Please enter your home delivery address.';
+    return;
+  }
+  if (orderType.value === 'dine_in' && (!currentTable.value || selectedTableIsOccupied.value)) {
+    orderError.value = `${currentTable.value || 'Selected table'} is currently occupied. Please choose an available free table.`;
     return;
   }
 

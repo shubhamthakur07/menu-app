@@ -37,6 +37,24 @@ class PublicMenuController extends Controller
             ], 404);
         }
 
+        // Live synchronize table occupancy status with active orders
+        if ($restaurant->tables) {
+            foreach ($restaurant->tables as $table) {
+                $hasActiveOrders = \App\Models\Order::where('restaurant_id', $restaurant->id)
+                    ->where('table_number', $table->name)
+                    ->whereIn('order_status', ['pending', 'accepted', 'preparing', 'ready'])
+                    ->exists();
+
+                $isOccupied = $hasActiveOrders || $table->status === 'occupied';
+                $expectedStatus = $isOccupied ? 'occupied' : 'available';
+
+                if ($table->status !== $expectedStatus) {
+                    $table->status = $expectedStatus;
+                    $table->save();
+                }
+            }
+        }
+
         return response()->json([
             'success' => true,
             'restaurant' => $restaurant,

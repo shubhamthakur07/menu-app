@@ -56,18 +56,20 @@ class OrderController extends Controller
             ], 422);
         }
 
-        // Check if Dine-In table already has an active order and restaurant disallows multiple orders
-        $existingActiveCount = 0;
+        // Check if Dine-In table already has an active order and is currently occupied
         if ($orderType === 'dine_in' && !empty($validated['table_number'])) {
+            $table = $restaurant->tables()->where('name', $validated['table_number'])->first();
             $existingActiveCount = Order::where('restaurant_id', $restaurant->id)
                 ->where('table_number', $validated['table_number'])
                 ->whereIn('order_status', ['pending', 'accepted', 'preparing', 'ready'])
                 ->count();
 
-            if ($existingActiveCount > 0 && !$restaurant->allow_shared_table_orders) {
+            $isOccupied = $existingActiveCount > 0 || ($table && $table->status === 'occupied');
+
+            if ($isOccupied) {
                 return response()->json([
                     'success' => false,
-                    'message' => "{$validated['table_number']} already has an active order and is occupied. Please select another available table.",
+                    'message' => "{$validated['table_number']} is currently occupied with an active order. Please select an available free table.",
                 ], 422);
             }
         }

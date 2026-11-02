@@ -264,10 +264,10 @@
                 </router-link>
                 <router-link
                   v-else
-                  :to="`/r/${rest.slug}?table=1`"
+                  :to="`/r/${rest.slug}`"
                   class="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 shadow"
                 >
-                  <i class="fa-solid fa-qrcode"></i> Scan / Open Menu (Table 1)
+                  <i class="fa-solid fa-utensils"></i> View Menu & Order
                 </router-link>
 
                 <!-- Direct URL preview -->
