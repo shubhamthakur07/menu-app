@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: menu_app
+    restart: unless-stopped
+    ports:
+      - "8008:8000"
+    environment:
+      APP_NAME: "QRMenu SaaS"
+      APP_ENV: local
+      APP_KEY: base64:hRrp/KWrH0gv+U+6yLA5wt3RihCSMD7XhkYity2f6vc=
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8008
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: menu_app_db
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+      FILESYSTEM_DISK: public
+    volumes:
+      - .:/var/www
+      - /var/www/vendor
+      - /var/www/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    container_name: menu_app_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: menu_app_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - menu_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  menu_mysql_data:
