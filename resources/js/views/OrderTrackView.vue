@@ -309,7 +309,7 @@
       <!-- Action Navigation Buttons -->
       <div class="flex gap-3">
         <router-link
-          :to="`/r/${order.restaurant?.slug}?table=${encodeURIComponent(order.table_number || 'Table 1')}`"
+          :to="`/r/${order.restaurant?.slug}?table=${encodeURIComponent(order.table_number || 'Table 1')}&continue_order=${encodeURIComponent(order.order_code || '')}`"
           class="flex-1 py-3 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-2xl border border-slate-200 text-center shadow-sm"
         >
           <i class="fa-solid fa-plus mr-1"></i> Order More Items
@@ -848,6 +848,16 @@ const fetchOrder = async () => {
     if (res.data.success) {
       order.value = res.data.order;
       upiString.value = res.data.upi_string;
+
+      if (order.value.customer_name) {
+        localStorage.setItem('qrmenu_customer_name', order.value.customer_name);
+      }
+      if (order.value.customer_phone) {
+        localStorage.setItem('qrmenu_customer_phone', order.value.customer_phone);
+      }
+      if (order.value.table_number && order.value.restaurant_id) {
+        localStorage.setItem(`qrmenu_active_table_${order.value.restaurant_id}`, order.value.table_number);
+      }
 
       if (upiString.value && order.value.payment_status !== 'paid') {
         renderQr();

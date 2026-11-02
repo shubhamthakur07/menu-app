@@ -429,8 +429,19 @@
 
           <!-- Modal Body -->
           <div class="p-4 overflow-y-auto space-y-4 flex-1">
-            <!-- Active Table Alert if Table is already occupied -->
-            <div v-if="orderType === 'dine_in' && selectedTableIsOccupied" class="bg-rose-50 border border-rose-300 rounded-2xl p-3.5 text-xs text-rose-950">
+            <!-- If user is seated at this table and adding more items (Running Order) -->
+            <div v-if="orderType === 'dine_in' && selectedTableIsOccupied && isMyActiveTable" class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 text-xs text-amber-950 flex items-start gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                <i class="fa-solid fa-bell-concierge text-sm"></i>
+              </div>
+              <div>
+                <div class="font-extrabold text-amber-900">Adding to Your Table Order ({{ currentTable }})</div>
+                <p class="text-[11px] text-amber-800 mt-0.5 leading-tight">These extra items will be sent to the kitchen and added to your ongoing meal bill.</p>
+              </div>
+            </div>
+
+            <!-- If table is occupied by someone else (Blocked) -->
+            <div v-else-if="orderType === 'dine_in' && selectedTableIsOccupied && !isMyActiveTable" class="bg-rose-50 border border-rose-300 rounded-2xl p-3.5 text-xs text-rose-950">
               <div class="flex items-center gap-2 font-bold text-rose-900 mb-1">
                 <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
                 <span>{{ currentTable }} is currently occupied with active diners!</span>
@@ -616,12 +627,15 @@
           <div class="p-4 border-t border-slate-200 bg-white">
             <button
               @click="submitOrder"
-              :disabled="submittingOrder || (orderType === 'dine_in' && selectedTableIsOccupied)"
+              :disabled="submittingOrder || isTableBlockedForOrder"
               class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <i v-if="submittingOrder" class="fa-solid fa-circle-notch fa-spin"></i>
-              <span v-else-if="orderType === 'dine_in' && selectedTableIsOccupied">
+              <span v-else-if="isTableBlockedForOrder">
                 Table Occupied — Select Available Table
+              </span>
+              <span v-else-if="orderType === 'dine_in' && selectedTableIsOccupied && isMyActiveTable">
+                Add to {{ currentTable }} Order • {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}
               </span>
               <span v-else>Confirm & Pay {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}</span>
             </button>
@@ -659,10 +673,10 @@
               v-for="tbl in dynamicTables"
               :key="tbl.id"
               @click="selectTable(tbl)"
-              :disabled="tbl.status === 'occupied'"
+              :disabled="tbl.status === 'occupied' && !(tbl.name === currentTable && isMyActiveTable)"
               :class="[
                 'p-3 rounded-2xl text-left transition border flex flex-col justify-between relative',
-                tbl.status === 'occupied'
+                tbl.status === 'occupied' && !(tbl.name === currentTable && isMyActiveTable)
                   ? 'border-rose-200 bg-rose-50/70 opacity-70 cursor-not-allowed'
                   : currentTable === tbl.name
                     ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/30 cursor-pointer shadow-sm'
@@ -670,11 +684,13 @@
               ]"
             >
               <div class="flex items-center justify-between mb-1">
-                <span class="font-extrabold text-xs" :class="tbl.status === 'occupied' ? 'text-slate-500' : 'text-slate-900'">{{ tbl.name }}</span>
+                <span class="font-extrabold text-xs" :class="tbl.status === 'occupied' && !(tbl.name === currentTable && isMyActiveTable) ? 'text-slate-500' : 'text-slate-900'">{{ tbl.name }}</span>
                 <span
                   :class="[
                     'w-2 h-2 rounded-full',
-                    tbl.status === 'occupied' ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'
+                    tbl.status === 'occupied'
+                      ? (tbl.name === currentTable && isMyActiveTable ? 'bg-amber-500' : 'bg-rose-500 animate-pulse')
+                      : 'bg-emerald-500'
                   ]"
                   :title="tbl.status === 'occupied' ? 'Occupied' : 'Available'"
                 ></span>
@@ -682,15 +698,22 @@
 
               <div class="flex items-center justify-between text-[10px]">
                 <span class="text-slate-400">{{ tbl.seating_capacity }} Seater</span>
-                <span :class="tbl.status === 'occupied' ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold'">
-                  {{ tbl.status === 'occupied' ? 'Occupied' : 'Available' }}
+                <span
+                  :class="[
+                    'font-bold',
+                    tbl.status === 'occupied'
+                      ? (tbl.name === currentTable && isMyActiveTable ? 'text-amber-600' : 'text-rose-600')
+                      : 'text-emerald-600'
+                  ]"
+                >
+                  {{ tbl.status === 'occupied' ? (tbl.name === currentTable && isMyActiveTable ? 'Your Table' : 'Occupied') : 'Available' }}
                 </span>
               </div>
             </button>
           </div>
 
-          <!-- Occupied Table Alert if selected table is occupied -->
-          <div v-if="selectedTableIsOccupied" class="p-3 mb-3 bg-rose-50 border border-rose-300 rounded-xl text-[11px] text-rose-900 flex items-start gap-2">
+          <!-- Occupied Table Alert if selected table is occupied by someone else -->
+          <div v-if="selectedTableIsOccupied && !isMyActiveTable" class="p-3 mb-3 bg-rose-50 border border-rose-300 rounded-xl text-[11px] text-rose-900 flex items-start gap-2">
             <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5"></i>
             <div>
               <span class="font-bold">{{ currentTable }} is currently occupied with active diners.</span>
@@ -700,10 +723,10 @@
 
           <button
             @click="showChangeTableModal = false"
-            :disabled="selectedTableIsOccupied || !currentTable"
+            :disabled="isTableBlockedForOrder || !currentTable"
             class="w-full py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ selectedTableIsOccupied ? 'Please Choose an Available Table' : `Confirm ${currentTable}` }}
+            {{ isTableBlockedForOrder ? 'Please Choose an Available Table' : `Confirm ${currentTable}` }}
           </button>
         </div>
       </div>
@@ -1023,9 +1046,9 @@ const showCheckoutModal = ref(false);
 const cart = ref([]);
 
 const customerForm = ref({
-  name: '',
-  phone: '',
-  address: '',
+  name: localStorage.getItem('qrmenu_customer_name') || '',
+  phone: localStorage.getItem('qrmenu_customer_phone') || '',
+  address: localStorage.getItem('qrmenu_customer_address') || '',
   notes: '',
 });
 const paymentMethod = ref('upi');
@@ -1237,6 +1260,26 @@ const selectedTableIsOccupied = computed(() => {
   return match && match.status === 'occupied';
 });
 
+const isMyActiveTable = computed(() => {
+  if (!currentTable.value || !restaurant.value) return false;
+  // If user came via "Order More Items" with continue_order in URL
+  if (route.query.continue_order) return true;
+
+  // If table matches stored active table for this restaurant
+  const savedTable = localStorage.getItem(`qrmenu_active_table_${restaurant.value.id}`);
+  const savedPhone = localStorage.getItem('qrmenu_customer_phone');
+  if (savedTable && savedTable === currentTable.value) {
+    if (!savedPhone || !customerForm.value.phone || customerForm.value.phone === savedPhone) {
+      return true;
+    }
+  }
+  return false;
+});
+
+const isTableBlockedForOrder = computed(() => {
+  return orderType.value === 'dine_in' && selectedTableIsOccupied.value && !isMyActiveTable.value;
+});
+
 const toggleVegOnly = () => {
   vegOnly.value = !vegOnly.value;
 };
@@ -1248,7 +1291,9 @@ const resetFilters = () => {
 };
 
 const selectTable = (tableObj) => {
-  if (tableObj.status === 'occupied') return;
+  if (tableObj.status === 'occupied' && !(tableObj.name === currentTable.value && isMyActiveTable.value)) {
+    return;
+  }
   currentTable.value = tableObj.name;
   showChangeTableModal.value = false;
 };
@@ -1348,7 +1393,7 @@ const submitOrder = async () => {
     orderError.value = 'Please enter your home delivery address.';
     return;
   }
-  if (orderType.value === 'dine_in' && (!currentTable.value || selectedTableIsOccupied.value)) {
+  if (orderType.value === 'dine_in' && (!currentTable.value || (selectedTableIsOccupied.value && !isMyActiveTable.value))) {
     orderError.value = `${currentTable.value || 'Selected table'} is currently occupied. Please choose an available free table.`;
     return;
   }
@@ -1360,6 +1405,7 @@ const submitOrder = async () => {
     const isSalon = restaurant.value.business_type === 'salon';
     const payload = {
       restaurant_id: restaurant.value.id,
+      continue_order: route.query.continue_order || null,
       order_type: isSalon ? 'dine_in' : orderType.value,
       table_number: isSalon
         ? (selectedChair.value || currentTable.value || 'Chair 1')
@@ -1380,6 +1426,15 @@ const submitOrder = async () => {
     if (res.data.success) {
       cart.value = [];
       showCheckoutModal.value = false;
+      // Persist customer details and active table
+      localStorage.setItem('qrmenu_customer_name', customerForm.value.name);
+      localStorage.setItem('qrmenu_customer_phone', customerForm.value.phone);
+      if (orderType.value === 'delivery') {
+        localStorage.setItem('qrmenu_customer_address', customerForm.value.address || '');
+      }
+      if (orderType.value === 'dine_in' && currentTable.value) {
+        localStorage.setItem(`qrmenu_active_table_${restaurant.value.id}`, currentTable.value);
+      }
       // Redirect to Order tracking / receipt page
       router.push(`/order-track/${res.data.order.order_code}`);
     }

@@ -23,6 +23,7 @@ class OrderController extends Controller
             'restaurant_id' => 'required|exists:restaurants,id',
             'order_type' => 'nullable|in:dine_in,delivery,takeaway',
             'table_number' => 'nullable|string|max:50',
+            'continue_order' => 'nullable|string|max:50',
             'booking_date' => 'nullable|date',
             'booking_time' => 'nullable|string|max:20',
             'chair_or_specialist' => 'nullable|string|max:100',
@@ -75,18 +76,47 @@ class OrderController extends Controller
         // Check if Dine-In table already has an active order and is currently occupied
         if ($orderType === 'dine_in' && !empty($validated['table_number'])) {
             $table = $restaurant->tables()->where('name', $validated['table_number'])->first();
-            $existingActiveCount = Order::where('restaurant_id', $restaurant->id)
+            $existingActiveOrders = Order::where('restaurant_id', $restaurant->id)
                 ->where('table_number', $validated['table_number'])
                 ->whereIn('order_status', ['pending', 'accepted', 'preparing', 'ready'])
-                ->count();
+                ->get();
 
-            $isOccupied = $existingActiveCount > 0 || ($table && $table->status === 'occupied');
+            $isOccupied = $existingActiveOrders->isNotEmpty() || ($table && $table->status === 'occupied');
 
             if ($isOccupied) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "{$validated['table_number']} is currently occupied with an active order. Please select an available free table.",
-                ], 422);
+                // Check if this is the SAME diner sitting at this table adding more items (Running Order)
+                $cleanIncomingPhone = preg_replace('/[^0-9]/', '', $validated['customer_phone']);
+                $incomingName = strtolower(trim($validated['customer_name']));
+                $continueCode = trim($request->input('continue_order', ''));
+
+                $isSameCustomer = false;
+
+                foreach ($existingActiveOrders as $actOrd) {
+                    $cleanExistingPhone = preg_replace('/[^0-9]/', '', $actOrd->customer_phone);
+                    // Match by phone number
+                    if (!empty($cleanIncomingPhone) && !empty($cleanExistingPhone) && $cleanIncomingPhone === $cleanExistingPhone) {
+                        $isSameCustomer = true;
+                        break;
+                    }
+                    // Match by order code (continue_order)
+                    if (!empty($continueCode) && strtoupper($actOrd->order_code) === strtoupper($continueCode)) {
+                        $isSameCustomer = true;
+                        break;
+                    }
+                    // Match by exact name
+                    if (!empty($incomingName) && strtolower(trim($actOrd->customer_name)) === $incomingName) {
+                        $isSameCustomer = true;
+                        break;
+                    }
+                }
+
+                // If not the same customer and restaurant disallows shared table orders, block it!
+                if (!$isSameCustomer && !$restaurant->allow_shared_table_orders) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "{$validated['table_number']} is currently occupied by active guests. Please select an available free table.",
+                    ], 422);
+                }
             }
         }
 
