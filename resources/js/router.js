@@ -5,12 +5,22 @@ import OrderTrackView from './views/OrderTrackView.vue';
 import LoginView from './views/LoginView.vue';
 import RegisterView from './views/RegisterView.vue';
 import OwnerDashboardView from './views/OwnerDashboardView.vue';
+import AboutView from './views/AboutView.vue';
 
 const routes = [
     {
         path: '/',
         name: 'home',
         component: HomeView,
+    },
+    {
+        path: '/about',
+        name: 'about',
+        component: AboutView,
+    },
+    {
+        path: '/about-us',
+        redirect: '/about',
     },
     {
         path: '/r/:slug',

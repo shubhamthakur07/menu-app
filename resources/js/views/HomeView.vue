@@ -14,10 +14,16 @@
           </div>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <router-link
+            to="/about"
+            class="px-3.5 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition inline-flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-address-card text-amber-400"></i> About Us
+          </router-link>
           <router-link
             to="/owner/login"
-            class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
+            class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition hidden sm:inline-flex items-center"
           >
             <i class="fa-solid fa-arrow-right-to-bracket mr-1.5"></i> Owner Login
           </router-link>
@@ -283,8 +289,16 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-800 bg-slate-950/80 py-8 mt-auto">
-      <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
-        QRMenu Multi-Restaurant SaaS System &copy; 2026. Built with Laravel 11, Vue 3, Tailwind CSS & MySQL.
+      <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div>
+          QRMenu Multi-Restaurant SaaS System &copy; 2026. Built by <span class="text-slate-300 font-semibold">Shubham Thakur</span>.
+        </div>
+        <div class="flex items-center space-x-4">
+          <router-link to="/about" class="text-amber-400 font-semibold hover:underline">About Us</router-link>
+          <a href="tel:+918219795479" class="hover:text-slate-300 transition flex items-center gap-1"><i class="fa-solid fa-phone text-emerald-400"></i>8219795479</a>
+          <a href="/guide.html" target="_blank" class="hover:text-slate-300 transition">User Guide (PDF)</a>
+          <router-link to="/owner/login" class="hover:text-slate-300 transition">Owner Login</router-link>
+        </div>
       </div>
     </footer>
   </div>

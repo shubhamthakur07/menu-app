@@ -81,6 +81,12 @@
           </router-link>
         </div>
       </div>
+
+      <div class="mt-6 text-center text-xs text-slate-500 flex items-center justify-center gap-3">
+        <router-link to="/" class="hover:text-slate-300 transition">← Back to Home</router-link>
+        <span>•</span>
+        <router-link to="/about" class="text-amber-400/90 hover:underline">About Us & Founder Info</router-link>
+      </div>
     </div>
   </div>
 </template>
