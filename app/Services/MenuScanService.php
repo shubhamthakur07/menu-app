@@ -75,57 +75,139 @@ class MenuScanService
         string $apiKey,
         ?string $businessType
     ): array {
-        $model = config('services.gemini.model', 'gemini-1.5-flash');
-        $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
-
+        $candidateModels = $this->getCandidateGeminiModels($apiKey);
         $systemPrompt = $this->buildSystemPrompt($businessType);
+        $lastErrorMessage = '';
 
-        try {
-            $response = Http::timeout(60)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($endpoint, [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                ['text' => $systemPrompt],
-                                [
-                                    'inline_data' => [
-                                        'mime_type' => $mimeType,
-                                        'data' => $base64Data,
+        foreach ($candidateModels as $model) {
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+
+            try {
+                $response = Http::timeout(60)
+                    ->withHeaders(['Content-Type' => 'application/json'])
+                    ->post($endpoint, [
+                        'contents' => [
+                            [
+                                'parts' => [
+                                    ['text' => $systemPrompt],
+                                    [
+                                        'inline_data' => [
+                                            'mime_type' => $mimeType,
+                                            'data' => $base64Data,
+                                        ],
                                     ],
                                 ],
                             ],
                         ],
-                    ],
-                    'generationConfig' => [
-                        'response_mime_type' => 'application/json',
-                        'temperature' => 0.2,
-                    ],
-                ]);
+                        'generationConfig' => [
+                            'response_mime_type' => 'application/json',
+                            'temperature' => 0.2,
+                        ],
+                    ]);
 
-            if ($response->failed()) {
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+                    return $this->parseJsonResponse($text);
+                }
+
                 $errorData = $response->json();
                 $errorMessage = $errorData['error']['message'] ?? $response->body();
+                $lastErrorMessage = $errorMessage;
+
+                // If the model is not found or deprecated, try next candidate model
+                if (
+                    $response->status() === 404 ||
+                    str_contains($errorMessage, 'is not found') ||
+                    str_contains($errorMessage, 'not supported for generateContent')
+                ) {
+                    Log::info("Gemini model {$model} not available, trying next fallback model.");
+
+                    continue;
+                }
+
+                // If it's an auth error or other error, break and return
                 Log::warning('Gemini API Error: '.$errorMessage);
 
                 return [
                     'success' => false,
                     'message' => 'Gemini API failed: '.$errorMessage,
                 ];
+            } catch (Exception $e) {
+                Log::error("Menu scan exception with model {$model}: ".$e->getMessage());
+                $lastErrorMessage = $e->getMessage();
             }
-
-            $data = $response->json();
-            $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-
-            return $this->parseJsonResponse($text);
-        } catch (Exception $e) {
-            Log::error('Menu scan exception: '.$e->getMessage());
-
-            return [
-                'success' => false,
-                'message' => 'Failed to connect to AI vision service: '.$e->getMessage(),
-            ];
         }
+
+        return [
+            'success' => false,
+            'message' => 'Gemini API failed: '.($lastErrorMessage ?: 'No supported Gemini model found for this key.'),
+        ];
+    }
+
+    /**
+     * Get candidate models in priority order, querying ListModels API if possible.
+     *
+     * @return array<string>
+     */
+    protected function getCandidateGeminiModels(string $apiKey): array
+    {
+        $preferredList = [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-flash',
+            'gemini-2.5-pro',
+            'gemini-2.0-pro',
+            'gemini-1.5-pro',
+        ];
+
+        try {
+            $listResponse = Http::timeout(8)->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
+            if ($listResponse->successful()) {
+                $models = $listResponse->json('models') ?? [];
+                $available = [];
+
+                foreach ($models as $m) {
+                    $methods = $m['supportedGenerationMethods'] ?? [];
+                    if (in_array('generateContent', $methods, true)) {
+                        $name = preg_replace('/^models\//', '', $m['name'] ?? '');
+                        if ($name) {
+                            $available[] = $name;
+                        }
+                    }
+                }
+
+                if (! empty($available)) {
+                    $ordered = [];
+                    foreach ($preferredList as $pref) {
+                        if (in_array($pref, $available, true)) {
+                            $ordered[] = $pref;
+                        }
+                    }
+                    foreach ($available as $avail) {
+                        if (str_contains($avail, 'flash') && ! in_array($avail, $ordered, true)) {
+                            $ordered[] = $avail;
+                        }
+                    }
+                    foreach ($available as $avail) {
+                        if (! in_array($avail, $ordered, true)) {
+                            $ordered[] = $avail;
+                        }
+                    }
+
+                    if (! empty($ordered)) {
+                        return array_unique($ordered);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::info('ListModels lookup failed: '.$e->getMessage());
+        }
+
+        return $preferredList;
     }
 
     /**
