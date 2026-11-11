@@ -3253,12 +3253,37 @@ const menuItems = ref([]);
 const orderStatusFilter = ref('all');
 const updatingOrderId = ref(null);
 const newOrderToast = ref(null);
-const notificationsEnabled = ref(false);
+const getInitialOwnerAlertsState = () => {
+  try {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('qrmenu_owner_alerts_enabled');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    return true; // Live order & payment sounds default to ON for restaurant owners
+  } catch (e) {
+    return true;
+  }
+};
+
+const notificationsEnabled = ref(getInitialOwnerAlertsState());
 
 const toggleNotificationAlerts = async () => {
-  playSound('new_order');
-  await requestNotificationPermission();
-  notificationsEnabled.value = true;
+  if (notificationsEnabled.value) {
+    notificationsEnabled.value = false;
+    try {
+      localStorage.setItem('qrmenu_owner_alerts_enabled', 'false');
+    } catch (e) {}
+  } else {
+    notificationsEnabled.value = true;
+    try {
+      localStorage.setItem('qrmenu_owner_alerts_enabled', 'true');
+    } catch (e) {}
+    playSound('new_order');
+    try {
+      await requestNotificationPermission();
+    } catch (e) {}
+  }
 };
 
 // Modals
@@ -4492,6 +4517,14 @@ const formatOrderTime = (dateStr) => {
 };
 
 onMounted(() => {
+  try {
+    const saved = localStorage.getItem('qrmenu_owner_alerts_enabled');
+    if (saved !== null) {
+      notificationsEnabled.value = saved === 'true';
+    } else {
+      notificationsEnabled.value = true;
+    }
+  } catch (e) {}
   fetchDashboardData();
   startAutoPoll();
 });

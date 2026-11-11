@@ -944,14 +944,16 @@ const prevPaymentStatus = ref(null);
 const customerToast = ref(null);
 
 const getInitialAlertsState = () => {
-  const saved = localStorage.getItem('qrmenu_alerts_enabled');
-  if (saved !== null) {
-    return saved === 'true';
-  }
-  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+  try {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('qrmenu_alerts_enabled');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    return true; // Default to ON for live order tracking
+  } catch (e) {
     return true;
   }
-  return false;
 };
 
 const customerAlertsEnabled = ref(getInitialAlertsState());
@@ -960,12 +962,18 @@ let toastTimer = null;
 const toggleCustomerAlerts = async () => {
   if (customerAlertsEnabled.value) {
     customerAlertsEnabled.value = false;
-    localStorage.setItem('qrmenu_alerts_enabled', 'false');
+    try {
+      localStorage.setItem('qrmenu_alerts_enabled', 'false');
+    } catch (e) {}
   } else {
-    playSound('status_update');
-    await requestNotificationPermission();
     customerAlertsEnabled.value = true;
-    localStorage.setItem('qrmenu_alerts_enabled', 'true');
+    try {
+      localStorage.setItem('qrmenu_alerts_enabled', 'true');
+    } catch (e) {}
+    playSound('status_update');
+    try {
+      await requestNotificationPermission();
+    } catch (e) {}
   }
 };
 
@@ -1485,6 +1493,14 @@ const formatDate = (dateStr) => {
 let pollTimer = null;
 
 onMounted(() => {
+  try {
+    const saved = localStorage.getItem('qrmenu_alerts_enabled');
+    if (saved !== null) {
+      customerAlertsEnabled.value = saved === 'true';
+    } else {
+      customerAlertsEnabled.value = true;
+    }
+  } catch (e) {}
   fetchOrder();
   // Automatically poll every 5s so customer gets live kitchen & food updates
   pollTimer = setInterval(() => {
