@@ -175,9 +175,11 @@ class OrderController extends Controller
                 $voucher = $validated['loyalty_voucher'];
                 $rewardId = $voucher['reward_id'];
                 $sig = $voucher['signature'] ?? '';
-                $expectedSig = hash_hmac('sha256', "{$restaurant->id}:{$validated['customer_phone']}:{$rewardId}", config('app.key'));
+                $cleanIncomingPhone = preg_replace('/[^0-9]/', '', $validated['customer_phone']);
+                $expectedSig = hash_hmac('sha256', "{$restaurant->id}:{$cleanIncomingPhone}:{$rewardId}", config('app.key'));
+                $expectedSigRaw = hash_hmac('sha256', "{$restaurant->id}:{$validated['customer_phone']}:{$rewardId}", config('app.key'));
 
-                if (hash_equals($expectedSig, $sig)) {
+                if (hash_equals($expectedSig, $sig) || hash_equals($expectedSigRaw, $sig)) {
                     $rewards = $restaurant->getEffectiveLoyaltyRewards();
                     $matchedReward = null;
                     foreach ($rewards as $r) {

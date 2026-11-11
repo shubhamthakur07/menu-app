@@ -373,9 +373,9 @@
           <!-- Royalty Reward Discount Row -->
           <div v-if="order.loyalty_reward_claimed && order.loyalty_reward_details" class="flex justify-between text-amber-700 font-bold bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-300">
             <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-crown text-amber-500"></i> Royalty Reward ({{ order.loyalty_reward_details.reward_title }}):
+              <i class="fa-solid fa-crown text-amber-500"></i> Royalty Reward ({{ order.loyalty_reward_details.title || order.loyalty_reward_details.reward_title || 'Loyalty Discount' }}):
             </span>
-            <span>-{{ order.restaurant?.currency }}{{ order.loyalty_reward_details.discount_amount }}</span>
+            <span>-{{ order.restaurant?.currency }}{{ order.discount_amount }}</span>
           </div>
 
           <div class="flex justify-between text-slate-500">

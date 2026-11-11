@@ -69,12 +69,20 @@ class LoyaltyProgramController extends Controller
         }
 
         $validated = $request->validate([
-            'phone' => 'required|string|max:25',
+            'phone' => 'nullable|string|max:25',
+            'customer_phone' => 'nullable|string|max:25',
             'reward_id' => 'required',
             'order_code' => 'nullable|string|max:50',
         ]);
 
-        $phone = trim($validated['phone']);
+        $phone = trim($validated['phone'] ?? $validated['customer_phone'] ?? '');
+        if (empty($phone)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer mobile number is required to claim reward.',
+            ], 422);
+        }
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
         $requiredVisits = (int) ($restaurant->loyalty_required_visits ?: 5);
         $customerLoyalty = $this->calculateCustomerLoyalty($restaurant, $phone, $requiredVisits);
 
@@ -155,7 +163,8 @@ class LoyaltyProgramController extends Controller
         }
 
         // Case 2: Claimed before ordering (voucher for checkout)
-        $signature = hash_hmac('sha256', "{$restaurant->id}:{$phone}:{$matchedReward['id']}", config('app.key'));
+        // Normalize signature using clean phone digits so spaces/prefixes never cause mismatches
+        $signature = hash_hmac('sha256', "{$restaurant->id}:{$cleanPhone}:{$matchedReward['id']}", config('app.key'));
 
         return response()->json([
             'success' => true,
@@ -163,9 +172,12 @@ class LoyaltyProgramController extends Controller
             'reward' => $matchedReward,
             'voucher' => [
                 'reward_id' => $matchedReward['id'],
+                'reward_title' => $matchedReward['title'],
                 'title' => $matchedReward['title'],
-                'type' => $matchedReward['type'],
-                'value' => $matchedReward['value'],
+                'reward_type' => $matchedReward['type'] ?? 'flat',
+                'type' => $matchedReward['type'] ?? 'flat',
+                'discount_value' => (float) ($matchedReward['value'] ?? 0),
+                'value' => (float) ($matchedReward['value'] ?? 0),
                 'phone' => $phone,
                 'signature' => $signature,
             ],
@@ -181,10 +193,20 @@ class LoyaltyProgramController extends Controller
     {
         $driver = DB::connection()->getDriverName();
         $dateExpr = $driver === 'sqlite' ? "strftime('%Y-%m-%d', created_at)" : 'DATE(created_at)';
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        $last10 = substr($cleanPhone, -10);
 
         // Get distinct visit dates and the latest order on each date
         $orders = Order::where('restaurant_id', $restaurant->id)
-            ->where('customer_phone', $phone)
+            ->where(function ($q) use ($phone, $cleanPhone, $last10) {
+                $q->where('customer_phone', $phone);
+                if (! empty($cleanPhone)) {
+                    $q->orWhere('customer_phone', $cleanPhone);
+                }
+                if (! empty($last10)) {
+                    $q->orWhere('customer_phone', 'like', "%{$last10}");
+                }
+            })
             ->where('order_status', '!=', 'cancelled')
             ->select(['id', 'order_code', 'total_amount', 'created_at', DB::raw("{$dateExpr} as visit_date")])
             ->orderBy('created_at', 'asc')
@@ -207,7 +229,15 @@ class LoyaltyProgramController extends Controller
         $visitCount = count($visitDates);
 
         $claimedCount = (int) Order::where('restaurant_id', $restaurant->id)
-            ->where('customer_phone', $phone)
+            ->where(function ($q) use ($phone, $cleanPhone, $last10) {
+                $q->where('customer_phone', $phone);
+                if (! empty($cleanPhone)) {
+                    $q->orWhere('customer_phone', $cleanPhone);
+                }
+                if (! empty($last10)) {
+                    $q->orWhere('customer_phone', 'like', "%{$last10}");
+                }
+            })
             ->where('loyalty_reward_claimed', true)
             ->count();
 

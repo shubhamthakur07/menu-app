@@ -735,7 +735,7 @@
                     <span>Royalty Reward Applied!</span>
                     <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wide">VOUCHER</span>
                   </div>
-                  <div class="text-[10px] text-slate-700 font-semibold">{{ activeLoyaltyVoucher.reward_title }}</div>
+                  <div class="text-[10px] text-slate-700 font-semibold">{{ activeLoyaltyVoucher.reward_title || activeLoyaltyVoucher.title }}</div>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -759,7 +759,7 @@
               </div>
               <div v-if="activeLoyaltyVoucher" class="flex justify-between text-emerald-600 font-bold">
                 <span class="flex items-center gap-1">
-                  <i class="fa-solid fa-crown text-amber-500"></i> Royalty Discount ({{ activeLoyaltyVoucher.reward_title }}):
+                  <i class="fa-solid fa-crown text-amber-500"></i> Royalty Discount ({{ activeLoyaltyVoucher.reward_title || activeLoyaltyVoucher.title }}):
                 </span>
                 <span>-{{ restaurant.currency }}{{ loyaltyDiscountAmount.toFixed(2) }}</span>
               </div>
@@ -1967,15 +1967,16 @@ const loyaltyDiscountAmount = computed(() => {
   if (!activeLoyaltyVoucher.value) return 0;
   const v = activeLoyaltyVoucher.value;
   const sub = cartSubtotal.value;
-  const val = Number(v.discount_value) || 0;
+  const val = Number(v.discount_value ?? v.value) || 0;
+  const type = v.reward_type || v.type;
 
-  if (v.reward_type === 'percentage') {
+  if (type === 'percent' || type === 'percentage') {
     return Math.round(((sub * val) / 100) * 100) / 100;
   }
-  if (v.reward_type === 'flat') {
+  if (type === 'flat') {
     return Math.min(sub, val);
   }
-  if (v.reward_type === 'bogo' || v.reward_type === 'free_item') {
+  if (type === 'bogo' || type === 'free_item') {
     if (val > 0) return Math.min(sub, val);
     return cart.value.length > 0 ? Math.min(sub, cart.value[0].price) : 0;
   }
@@ -2119,8 +2120,10 @@ const spinWheel = async () => {
   const sliceDeg = 360 / numSlices;
   const sliceCenterDeg = winningIndex * sliceDeg + sliceDeg / 2;
   const targetDeg = 270 - sliceCenterDeg;
-  const fullRotations = 360 * 5;
-  const finalRotation = spinnerRotation.value + fullRotations + ((targetDeg - (spinnerRotation.value % 360) + 360) % 360);
+  const normDeg = (deg) => ((deg % 360) + 360) % 360;
+  const currentNorm = normDeg(spinnerRotation.value);
+  const delta = normDeg(targetDeg - currentNorm);
+  const finalRotation = spinnerRotation.value + 360 * 5 + delta;
 
   spinnerRotation.value = finalRotation;
   playSound('status_update');
@@ -2251,6 +2254,7 @@ const claimLoyaltyReward = async (reward) => {
   try {
     const phone = customerForm.value.phone || phoneCheckInput.value;
     const res = await axios.post(`/r/${restaurant.value.slug}/claim-loyalty-reward`, {
+      phone: phone,
       customer_phone: phone,
       reward_id: reward?.id || null,
     });
