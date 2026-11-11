@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
-use App\Models\MenuItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -127,7 +126,7 @@ class MenuItemController extends Controller
         $item = $restaurant->menuItems()->findOrFail($id);
 
         $item->update([
-            'is_available' => !$item->is_available,
+            'is_available' => ! $item->is_available,
         ]);
 
         return response()->json([

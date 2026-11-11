@@ -77,6 +77,16 @@
             <span class="hidden sm:inline">Guide & PDF</span>
           </a>
 
+          <!-- Super Admin Plans & Subscription Manager Link -->
+          <router-link
+            to="/admin/plans"
+            class="px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            title="Super Admin Plan Customizer & Client Manager"
+          >
+            <i class="fa-solid fa-crown text-amber-400"></i>
+            <span class="hidden sm:inline">Admin Plans</span>
+          </router-link>
+
           <!-- Live Alerts & Sound Toggle Button -->
           <button
             @click="toggleNotificationAlerts"
@@ -166,6 +176,54 @@
       </div>
 
       <div v-else>
+        <!-- 30-Day Free Trial / Subscription Status Alert Strip -->
+        <div
+          v-if="subscriptionData"
+          class="mb-6 p-4 rounded-3xl border flex items-center justify-between gap-4 flex-wrap shadow-lg transition"
+          :class="subscriptionData.restaurant?.is_expired
+            ? 'bg-rose-500/10 border-rose-500/30 text-rose-200'
+            : (subscriptionData.restaurant?.is_trial
+                ? 'bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-purple-500/15 border-cyan-500/30 text-cyan-200'
+                : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200')"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg font-black shrink-0 shadow"
+              :class="subscriptionData.restaurant?.is_expired
+                ? 'bg-rose-500/20 text-rose-400'
+                : (subscriptionData.restaurant?.is_trial ? 'bg-cyan-500/20 text-cyan-400' : 'bg-emerald-500/20 text-emerald-400')"
+            >
+              <i :class="subscriptionData.restaurant?.is_expired ? 'fa-solid fa-triangle-exclamation' : (subscriptionData.restaurant?.is_trial ? 'fa-solid fa-gift' : 'fa-solid fa-circle-check')"></i>
+            </div>
+            <div>
+              <div class="font-extrabold text-sm text-white flex items-center gap-2">
+                <span>{{ subscriptionData.restaurant?.is_trial ? '30-Day Free Trial Active' : (subscriptionData.active_subscription?.plan_name || 'Active Plan') }}</span>
+                <span
+                  class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
+                  :class="subscriptionData.restaurant?.is_expired ? 'bg-rose-500 text-white' : 'bg-amber-500 text-slate-950'"
+                >
+                  {{ subscriptionData.restaurant?.is_expired ? 'EXPIRED' : `${subscriptionData.restaurant?.days_remaining} DAYS REMAINING` }}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-300 mt-0.5">
+                {{ subscriptionData.restaurant?.is_trial
+                  ? 'All VIP Features are 100% FREE for your first 30 days! No credit card needed.'
+                  : `Your plan cycle is active until ${formatSubscriptionDate(subscriptionData.restaurant?.subscription_ends_at)}. Existing features remain locked in.` }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              @click="activeTab = 'subscription'"
+              class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black rounded-xl text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <i class="fa-solid fa-gem"></i>
+              <span>{{ subscriptionData.restaurant?.is_expired ? 'Upgrade Plan' : 'View Plans & Pricing' }}</span>
+            </button>
+          </div>
+        </div>
+
         <!-- TAB 1: OVERVIEW & STATS -->
         <div v-if="activeTab === 'overview'" class="space-y-8">
           <!-- Metric Cards -->
@@ -2242,6 +2300,201 @@
             </button>
           </form>
         </div>
+
+        <!-- TAB 12: SUBSCRIPTION & FEATURE PLANS -->
+        <div v-if="activeTab === 'subscription'" class="space-y-8">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-gem text-cyan-400"></i>
+              <span>Subscription & Feature Plans</span>
+            </h2>
+            <p class="text-xs text-slate-400">Apne restaurant ke liye best plan chunein aur zaroori features unlock karein.</p>
+          </div>
+
+          <!-- Active Plan Status Card (Grandfathered Snapshot) -->
+          <div class="bg-slate-800/90 border border-slate-700 p-6 rounded-3xl shadow-xl relative overflow-hidden">
+            <div class="absolute -right-8 -top-8 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-start justify-between flex-wrap gap-4 pb-4 border-b border-slate-700/80">
+              <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Your Active Subscription</span>
+                <h3 class="text-2xl font-black text-white mt-1">
+                  {{ subscriptionData?.active_subscription?.plan_name || '30-Day Free Trial (All VIP Features)' }}
+                </h3>
+                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span
+                    class="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                    :class="subscriptionData?.restaurant?.is_expired ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'"
+                  >
+                    {{ subscriptionData?.restaurant?.is_expired ? 'Expired' : (subscriptionData?.restaurant?.is_trial ? 'Trial Active' : 'Paid Active') }}
+                  </span>
+                  <span class="text-xs text-slate-300">
+                    Cycle: <strong class="text-amber-400 capitalize">{{ subscriptionData?.active_subscription?.billing_cycle || 'Trial' }}</strong>
+                  </span>
+                  <span class="text-xs text-slate-400">•</span>
+                  <span class="text-xs text-slate-300">
+                    Price: <strong>₹{{ subscriptionData?.active_subscription?.plan_price || 0 }}</strong>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Days Left Big Badge -->
+              <div class="text-right">
+                <div class="text-3xl font-black" :class="subscriptionData?.restaurant?.days_remaining > 5 ? 'text-emerald-400' : 'text-amber-400'">
+                  {{ subscriptionData?.restaurant?.days_remaining }} <span class="text-sm font-bold text-slate-400">Days Left</span>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-1">
+                  Valid until: {{ formatSubscriptionDate(subscriptionData?.restaurant?.subscription_ends_at || subscriptionData?.restaurant?.trial_ends_at) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Grandfathered Active Features in Current Cycle -->
+            <div class="mt-5">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-solid fa-lock-open text-emerald-400"></i> Active Features in Your Current Cycle (Grandfathered):
+                </span>
+                <span class="text-[10px] text-slate-400">
+                  (Ye features aapke pure cycle tak active rahenge)
+                </span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <div
+                  v-for="(def, key) in subscriptionData?.feature_definitions"
+                  :key="key"
+                  class="p-2.5 rounded-xl border flex items-center justify-between text-xs"
+                  :class="subscriptionData?.active_subscription?.features_snapshot && subscriptionData.active_subscription.features_snapshot[key]
+                    ? 'bg-slate-900/80 border-slate-700/80 text-white'
+                    : 'bg-slate-900/40 border-slate-800 text-slate-500 opacity-60'"
+                >
+                  <span class="font-medium">{{ def.label }}</span>
+                  <i
+                    :class="subscriptionData?.active_subscription?.features_snapshot && subscriptionData.active_subscription.features_snapshot[key]
+                      ? 'fa-solid fa-check text-emerald-400'
+                      : 'fa-solid fa-xmark text-slate-600'"
+                    class="text-xs"
+                  ></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Plan Comparison & Upgrade Grid -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 class="text-lg font-bold text-white">Choose a Plan for Next Cycle / Upgrade Now</h3>
+                <p class="text-xs text-slate-400">Apne business ke hisab se sahi plan chunein.</p>
+              </div>
+
+              <!-- Monthly / Yearly Toggle -->
+              <div class="flex items-center bg-slate-900 border border-slate-700 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  @click="ownerSelectedCycle = 'monthly'"
+                  :class="[
+                    'px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer',
+                    ownerSelectedCycle === 'monthly' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                  ]"
+                >
+                  Monthly Billing
+                </button>
+                <button
+                  type="button"
+                  @click="ownerSelectedCycle = 'yearly'"
+                  :class="[
+                    'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer',
+                    ownerSelectedCycle === 'yearly' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+                  ]"
+                >
+                  <span>Yearly Billing</span>
+                  <span class="text-[9px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.2 rounded-md uppercase">Save 30%</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Available Plans Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div
+                v-for="plan in subscriptionData?.available_plans"
+                :key="plan.id"
+                class="bg-slate-800/80 border rounded-3xl p-6 flex flex-col justify-between transition relative shadow-lg hover:shadow-2xl"
+                :class="subscriptionData?.restaurant?.subscription_plan === plan.slug
+                  ? 'border-amber-500 ring-2 ring-amber-500/20 bg-slate-800'
+                  : 'border-slate-700'"
+              >
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span
+                      v-if="plan.badge_text"
+                      class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                    >
+                      {{ plan.badge_text }}
+                    </span>
+                    <span v-else class="text-[10px] text-slate-400 uppercase font-bold">Standard</span>
+
+                    <span
+                      v-if="subscriptionData?.restaurant?.subscription_plan === plan.slug"
+                      class="text-[10px] font-extrabold bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full"
+                    >
+                      CURRENT PLAN
+                    </span>
+                  </div>
+
+                  <h4 class="text-xl font-black text-white mt-1">{{ plan.name }}</h4>
+                  <p class="text-xs text-slate-400 mt-1 min-h-[32px]">{{ plan.description }}</p>
+
+                  <div class="mt-4 pb-4 border-b border-slate-700">
+                    <div class="text-3xl font-black text-amber-400">
+                      ₹{{ ownerSelectedCycle === 'yearly' ? plan.price_yearly : plan.price_monthly }}
+                      <span class="text-xs font-normal text-slate-400">/{{ ownerSelectedCycle === 'yearly' ? 'year' : 'month' }}</span>
+                    </div>
+                    <div v-if="ownerSelectedCycle === 'yearly'" class="text-[10px] text-emerald-400 font-semibold mt-0.5">
+                      (Approx ₹{{ Math.round(plan.price_yearly / 12) }}/month • 2 Months Free)
+                    </div>
+                  </div>
+
+                  <!-- Features List -->
+                  <div class="mt-5 space-y-2 text-xs">
+                    <div
+                      v-for="(def, key) in subscriptionData?.feature_definitions"
+                      :key="key"
+                      class="flex items-center justify-between py-1 border-b border-slate-700/40"
+                    >
+                      <span :class="plan.features && plan.features[key] ? 'text-slate-200' : 'text-slate-500 line-through'">
+                        {{ def.label }}
+                      </span>
+                      <i
+                        :class="plan.features && plan.features[key] ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-circle-xmark text-slate-600'"
+                      ></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-700">
+                  <button
+                    @click="choosePlanToUpgrade(plan)"
+                    :disabled="upgradingPlan"
+                    :class="[
+                      'w-full py-3 rounded-xl font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow',
+                      subscriptionData?.restaurant?.subscription_plan === plan.slug
+                        ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950'
+                    ]"
+                  >
+                    <i v-if="upgradingPlan" class="fa-solid fa-circle-notch fa-spin"></i>
+                    <template v-else>
+                      <span>{{ subscriptionData?.restaurant?.subscription_plan === plan.slug ? 'Renew This Plan' : 'Upgrade to ' + plan.name }}</span>
+                      <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </template>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -3887,7 +4140,10 @@ const tabs = computed(() => {
     });
   }
 
-  list.push({ id: 'settings', name: 'Settings', icon: 'fa-solid fa-gear' });
+  list.push(
+    { id: 'settings', name: 'Settings', icon: 'fa-solid fa-gear' },
+    { id: 'subscription', name: 'Plans & Billing', icon: 'fa-solid fa-gem text-cyan-400' }
+  );
 
   return list;
 });
@@ -4591,6 +4847,47 @@ const formatOrderTime = (dateStr) => {
   }
 };
 
+// Subscription & Billing State
+const subscriptionData = ref(null);
+const ownerSelectedCycle = ref('yearly');
+const upgradingPlan = ref(false);
+
+const fetchSubscriptionData = async () => {
+  try {
+    const res = await axios.get('/owner/subscription');
+    if (res.data.success) {
+      subscriptionData.value = res.data;
+    }
+  } catch (err) {
+    console.error('Failed to load subscription details', err);
+  }
+};
+
+const choosePlanToUpgrade = async (plan) => {
+  if (!confirm(`Upgrade to ${plan.name} (${ownerSelectedCycle.value === 'yearly' ? 'Yearly - ₹' + plan.price_yearly : 'Monthly - ₹' + plan.price_monthly})?`)) return;
+  upgradingPlan.value = true;
+  try {
+    const res = await axios.post('/owner/subscription/select-plan', {
+      plan_id: plan.id,
+      cycle: ownerSelectedCycle.value,
+      payment_method: 'upi',
+    });
+    alert(res.data.message);
+    await fetchSubscriptionData();
+    await fetchDashboardData();
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to upgrade plan');
+  } finally {
+    upgradingPlan.value = false;
+  }
+};
+
+const formatSubscriptionDate = (dateStr) => {
+  if (!dateStr) return 'Active';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 onMounted(() => {
   try {
     const saved = localStorage.getItem('qrmenu_owner_alerts_enabled');
@@ -4601,6 +4898,7 @@ onMounted(() => {
     }
   } catch (e) {}
   fetchDashboardData();
+  fetchSubscriptionData();
   startAutoPoll();
   checkTabsOverflow();
   window.addEventListener('resize', checkTabsOverflow);

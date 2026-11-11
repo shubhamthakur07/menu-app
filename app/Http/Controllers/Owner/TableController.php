@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\RestaurantTable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -113,7 +112,7 @@ class TableController extends Controller
             $num = $existingCount + $i;
             $table = $restaurant->tables()->create([
                 'name' => "{$prefix} {$num}",
-                'code' => strtoupper(substr($prefix, 0, 1)) . $num,
+                'code' => strtoupper(substr($prefix, 0, 1)).$num,
                 'seating_capacity' => $capacity,
                 'status' => 'available',
                 'is_active' => true,

@@ -2,21 +2,25 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Restaurant;
 use App\Models\Category;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Restaurant;
+use App\Models\RestaurantSubscription;
+use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. First Owner: Royal Spice Restro
+        // 0. Seed Subscription Plans Master Table
+        $this->call(SubscriptionPlanSeeder::class);
+
+        // 1. First Owner: Rajesh Sharma
         $owner1 = User::create([
             'name' => 'Rajesh Sharma',
             'email' => 'rajesh@royalspice.com',
@@ -44,7 +48,29 @@ class DatabaseSeeder extends Seeder
             'enable_online_payment' => true,
             'enable_cash_payment' => true,
             'is_active' => true,
+            'subscription_plan' => 'vip',
+            'subscription_status' => 'active',
+            'trial_ends_at' => now()->addDays(365),
+            'subscription_ends_at' => now()->addDays(365),
         ]);
+
+        $vipPlan = SubscriptionPlan::where('slug', 'vip')->first();
+        if ($vipPlan) {
+            $sub = RestaurantSubscription::create([
+                'restaurant_id' => $restaurant1->id,
+                'subscription_plan_id' => $vipPlan->id,
+                'plan_name' => $vipPlan->name,
+                'plan_price' => $vipPlan->price_yearly,
+                'billing_cycle' => 'yearly',
+                'features_snapshot' => $vipPlan->features,
+                'status' => 'active',
+                'starts_at' => now(),
+                'ends_at' => now()->addDays(365),
+                'payment_method' => 'manual',
+                'notes' => 'Seeded Demo Account',
+            ]);
+            $restaurant1->update(['current_subscription_id' => $sub->id]);
+        }
 
         $starters1 = Category::create([
             'restaurant_id' => $restaurant1->id,
@@ -203,7 +229,6 @@ class DatabaseSeeder extends Seeder
             'subtotal' => 390.00,
         ]);
 
-
         // 2. Second Owner: Green Garden Bistro
         $owner2 = User::create([
             'name' => 'Pooja Patel',
@@ -232,7 +257,29 @@ class DatabaseSeeder extends Seeder
             'enable_online_payment' => true,
             'enable_cash_payment' => true,
             'is_active' => true,
+            'subscription_plan' => 'vip',
+            'subscription_status' => 'active',
+            'trial_ends_at' => now()->addDays(365),
+            'subscription_ends_at' => now()->addDays(365),
         ]);
+
+        $vipPlan = SubscriptionPlan::where('slug', 'vip')->first();
+        if ($vipPlan) {
+            $sub = RestaurantSubscription::create([
+                'restaurant_id' => $restaurant1->id,
+                'subscription_plan_id' => $vipPlan->id,
+                'plan_name' => $vipPlan->name,
+                'plan_price' => $vipPlan->price_yearly,
+                'billing_cycle' => 'yearly',
+                'features_snapshot' => $vipPlan->features,
+                'status' => 'active',
+                'starts_at' => now(),
+                'ends_at' => now()->addDays(365),
+                'payment_method' => 'manual',
+                'notes' => 'Seeded Demo Account',
+            ]);
+            $restaurant1->update(['current_subscription_id' => $sub->id]);
+        }
 
         $pizzas = Category::create([
             'restaurant_id' => $restaurant2->id,

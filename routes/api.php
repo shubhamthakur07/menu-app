@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PlanController as AdminPlanController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerFeedbackController;
 use App\Http\Controllers\LoyaltyProgramController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Owner\MenuItemController;
 use App\Http\Controllers\Owner\MenuScanController;
 use App\Http\Controllers\Owner\OwnerOrderController;
 use App\Http\Controllers\Owner\RestaurantController;
+use App\Http\Controllers\Owner\SubscriptionController as OwnerSubscriptionController;
 use App\Http\Controllers\Owner\TableController;
 use App\Http\Controllers\Owner\TableServiceCallController as OwnerTableServiceCallController;
 use App\Http\Controllers\PublicMenuController;
@@ -103,4 +105,22 @@ Route::middleware('auth')->group(function () {
     Route::put('/owner/tables/{id}', [TableController::class, 'update']);
     Route::patch('/owner/tables/{id}/vacate', [TableController::class, 'vacate']);
     Route::delete('/owner/tables/{id}', [TableController::class, 'destroy']);
+
+    // Owner Subscription & Billing
+    Route::get('/owner/subscription', [OwnerSubscriptionController::class, 'show']);
+    Route::post('/owner/subscription/select-plan', [OwnerSubscriptionController::class, 'selectPlan']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| App Admin Subscription & Plan Management Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->group(function () {
+    Route::get('/plans', [AdminPlanController::class, 'index']);
+    Route::post('/plans', [AdminPlanController::class, 'store']);
+    Route::put('/plans/{id}', [AdminPlanController::class, 'update']);
+    Route::delete('/plans/{id}', [AdminPlanController::class, 'destroy']);
+    Route::get('/subscribers', [AdminPlanController::class, 'subscribers']);
+    Route::post('/subscribers/{restaurantId}/assign-plan', [AdminPlanController::class, 'assignPlan']);
 });

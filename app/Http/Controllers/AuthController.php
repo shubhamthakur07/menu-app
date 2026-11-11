@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\MenuItem;
 use App\Models\Restaurant;
+use App\Models\RestaurantSubscription;
+use App\Models\RestaurantTable;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,7 +56,7 @@ class AuthController extends Controller
             'name' => $validated['restaurant_name'],
             'business_type' => $businessType,
             'slug' => $slug,
-            'tagline' => $businessType === 'salon' ? 'Professional Hair & Grooming Lounge' : 'Welcome to ' . $validated['restaurant_name'],
+            'tagline' => $businessType === 'salon' ? 'Professional Hair & Grooming Lounge' : 'Welcome to '.$validated['restaurant_name'],
             'description' => $businessType === 'salon' ? 'Expert haircuts, beard styling and grooming treatments without the waiting queue.' : 'Fresh delicious food, served with love and passion.',
             'address' => $validated['restaurant_address'] ?? 'Main Market',
             'phone' => $validated['phone'] ?? null,
@@ -75,12 +78,46 @@ class AuthController extends Controller
             'enable_online_payment' => true,
             'enable_cash_payment' => true,
             'is_active' => true,
+            'subscription_plan' => 'vip',
+            'subscription_status' => 'trial',
+            'trial_ends_at' => now()->addDays(30),
+            'subscription_ends_at' => now()->addDays(30),
         ]);
+
+        // Create initial 30-day Free Trial subscription record with full features snapshot
+        $vipPlan = SubscriptionPlan::where('slug', 'vip')->first();
+        $trialFeatures = $vipPlan ? $vipPlan->features : [
+            'enable_qr_menu' => true,
+            'enable_pdf_download' => true,
+            'enable_online_payment' => true,
+            'enable_waiter_call' => true,
+            'enable_split_bill' => true,
+            'enable_voice_search' => true,
+            'enable_kds' => true,
+            'enable_google_reviews' => true,
+            'enable_loyalty' => true,
+        ];
+
+        $trialSub = RestaurantSubscription::create([
+            'restaurant_id' => $restaurant->id,
+            'subscription_plan_id' => $vipPlan?->id,
+            'plan_name' => '30-Day Free Trial (All VIP Features)',
+            'plan_price' => 0,
+            'billing_cycle' => 'trial',
+            'features_snapshot' => $trialFeatures,
+            'status' => 'trial',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays(30),
+            'payment_method' => 'free_trial',
+            'notes' => 'Automatic 30-day free trial on registration',
+        ]);
+
+        $restaurant->update(['current_subscription_id' => $trialSub->id]);
 
         // Create sample default categories & chairs/tables based on business type
         if ($businessType === 'salon') {
             for ($i = 1; $i <= 4; $i++) {
-                \App\Models\RestaurantTable::create([
+                RestaurantTable::create([
                     'restaurant_id' => $restaurant->id,
                     'name' => "Chair {$i}",
                     'code' => "chair-{$i}",
@@ -124,7 +161,7 @@ class AuthController extends Controller
             ]);
         } else {
             for ($i = 1; $i <= 6; $i++) {
-                \App\Models\RestaurantTable::create([
+                RestaurantTable::create([
                     'restaurant_id' => $restaurant->id,
                     'name' => "Table {$i}",
                     'code' => "tbl-{$i}",
@@ -203,7 +240,7 @@ class AuthController extends Controller
      */
     public function user(Request $request): JsonResponse
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return response()->json([
                 'authenticated' => false,
                 'user' => null,

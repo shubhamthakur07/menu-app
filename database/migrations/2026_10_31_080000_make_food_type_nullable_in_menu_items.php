@@ -17,7 +17,7 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasColumn('menu_items', 'target_audience')) {
+        if (! Schema::hasColumn('menu_items', 'target_audience')) {
             Schema::table('menu_items', function (Blueprint $table) {
                 $table->string('target_audience', 50)->nullable()->default('all');
             });

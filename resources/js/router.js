@@ -5,6 +5,7 @@ import OrderTrackView from './views/OrderTrackView.vue';
 import LoginView from './views/LoginView.vue';
 import RegisterView from './views/RegisterView.vue';
 import OwnerDashboardView from './views/OwnerDashboardView.vue';
+import AdminPlansView from './views/AdminPlansView.vue';
 import AboutView from './views/AboutView.vue';
 
 const routes = [
@@ -48,6 +49,15 @@ const routes = [
         path: '/owner/dashboard',
         name: 'dashboard',
         component: OwnerDashboardView,
+    },
+    {
+        path: '/admin/plans',
+        name: 'admin-plans',
+        component: AdminPlansView,
+    },
+    {
+        path: '/admin/subscribers',
+        redirect: '/admin/plans',
     },
     {
         path: '/:pathMatch(.*)*',

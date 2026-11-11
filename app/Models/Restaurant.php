@@ -50,12 +50,19 @@ class Restaurant extends Model
         'enable_split_bill',
         'enable_voice_search',
         'enable_kds',
+        'subscription_plan',
+        'subscription_status',
+        'trial_ends_at',
+        'subscription_ends_at',
+        'current_subscription_id',
         'is_active',
     ];
 
     protected function casts(): array
     {
         return [
+            'trial_ends_at' => 'datetime',
+            'subscription_ends_at' => 'datetime',
             'enable_online_payment' => 'boolean',
             'enable_cash_payment' => 'boolean',
             'enable_home_delivery' => 'boolean',
@@ -78,6 +85,37 @@ class Restaurant extends Model
             'table_count' => 'integer',
             'slot_duration_minutes' => 'integer',
         ];
+    }
+
+    public function currentSubscription(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantSubscription::class, 'current_subscription_id');
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(RestaurantSubscription::class)->latest();
+    }
+
+    /**
+     * Check if a feature is enabled under the restaurant's active subscription.
+     * Uses the grandfathered snapshot of the current active cycle.
+     */
+    public function hasFeature(string $featureKey): bool
+    {
+        $sub = $this->currentSubscription;
+        if ($sub && ! $sub->isExpired()) {
+            return $sub->isFeatureEnabled($featureKey);
+        }
+
+        // Fallback: If restaurant is in trial mode, all features remain unlocked
+        if ($this->subscription_status === 'trial') {
+            if ($this->trial_ends_at === null || now()->isBefore($this->trial_ends_at)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function user(): BelongsTo

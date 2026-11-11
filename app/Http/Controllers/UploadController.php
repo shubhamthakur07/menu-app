@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class UploadController extends Controller
@@ -23,12 +22,12 @@ class UploadController extends Controller
         $file = $request->file('image');
 
         // Clean filename with timestamp
-        $filename = time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+        $filename = time().'_'.Str::random(8).'.'.$file->getClientOriginalExtension();
 
         $path = $file->storeAs("uploads/{$folder}", $filename, 'public');
 
         // Return the accessible public URL
-        $url = asset('storage/' . $path);
+        $url = asset('storage/'.$path);
 
         return response()->json([
             'success' => true,

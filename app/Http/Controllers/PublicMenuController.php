@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Restaurant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,11 +27,11 @@ class PublicMenuController extends Controller
                             $itemQuery->orderBy('is_recommended', 'desc')
                                 ->orderBy('name');
                         }]);
-                }
+                },
             ])
             ->first();
 
-        if (!$restaurant) {
+        if (! $restaurant) {
             return response()->json([
                 'success' => false,
                 'message' => 'Restaurant not found or currently inactive.',
@@ -39,7 +40,7 @@ class PublicMenuController extends Controller
 
         // Live synchronize table occupancy status with active orders in 1 fast query
         if ($restaurant->tables && $restaurant->tables->isNotEmpty()) {
-            $occupiedTableNames = \App\Models\Order::where('restaurant_id', $restaurant->id)
+            $occupiedTableNames = Order::where('restaurant_id', $restaurant->id)
                 ->whereIn('order_status', ['pending', 'accepted', 'preparing', 'ready'])
                 ->whereNotNull('table_number')
                 ->distinct()
@@ -69,8 +70,8 @@ class PublicMenuController extends Controller
         }
 
         $restaurants = $query->withCount(['menuItems' => function ($q) {
-                $q->where('is_available', true);
-            }])
+            $q->where('is_available', true);
+        }])
             ->get();
 
         return response()->json([
