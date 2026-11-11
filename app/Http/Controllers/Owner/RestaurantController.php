@@ -7,7 +7,6 @@ use App\Models\Restaurant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class RestaurantController extends Controller
 {
@@ -17,7 +16,7 @@ class RestaurantController extends Controller
     public function show(Request $request): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
@@ -25,7 +24,7 @@ class RestaurantController extends Controller
             ->withCount(['categories', 'menuItems', 'orders'])
             ->first();
 
-        if (!$restaurant) {
+        if (! $restaurant) {
             return response()->json(['message' => 'No restaurant found for this account.'], 404);
         }
 
@@ -71,6 +70,9 @@ class RestaurantController extends Controller
             'opening_time' => 'nullable|string|max:10',
             'closing_time' => 'nullable|string|max:10',
             'tax_percentage' => 'required|numeric|min:0|max:100',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'geofence_radius_km' => 'nullable|numeric|min:0.5|max:100',
             'enable_online_payment' => 'boolean',
             'enable_cash_payment' => 'boolean',
             'enable_home_delivery' => 'boolean',

@@ -44,6 +44,9 @@ class LoyaltyProgramController extends Controller
             'loyalty_enabled' => $loyaltyEnabled,
             'required_visits' => $requiredVisits,
             'game_type' => $gameType,
+            'latitude' => $restaurant->latitude ? (float) $restaurant->latitude : null,
+            'longitude' => $restaurant->longitude ? (float) $restaurant->longitude : null,
+            'geofence_radius_km' => (float) ($restaurant->geofence_radius_km ?: 5.0),
             'rewards' => $rewards,
             'customer' => $customerData,
         ]);

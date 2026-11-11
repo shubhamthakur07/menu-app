@@ -20,6 +20,43 @@
     </div>
 
     <div v-else>
+      <!-- 5 KM Geofence Nearby Reward Toast / Notification -->
+      <transition enter-active-class="transform transition ease-out duration-300" enter-from-class="-translate-y-full opacity-0" enter-to-class="translate-y-0 opacity-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100" leave-to-class="-translate-y-full opacity-0">
+        <div
+          v-if="showNearbyAlert && isWithinGeofence"
+          class="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-md bg-gradient-to-r from-amber-600 via-orange-600 to-purple-700 text-white p-3.5 rounded-2xl shadow-2xl border-2 border-white/50 flex items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shrink-0">
+              📍
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-black text-xs">You're Nearby! ({{ userDistanceKm !== null ? userDistanceKm.toFixed(1) : '<5' }} km)</span>
+                <span class="bg-amber-300 text-slate-950 font-black text-[9px] px-1.5 rounded-full uppercase">5 KM REWARD</span>
+              </div>
+              <p class="text-[11px] text-white/95 mt-0.5">
+                You are in our Royalty Rewards zone! Spin the Lucky Wheel for up to 40% OFF today!
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button
+              @click="openLoyaltyModal(); showNearbyAlert = false;"
+              class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-950 font-black text-[11px] rounded-xl shadow cursor-pointer"
+            >
+              Spin Now
+            </button>
+            <button
+              @click="showNearbyAlert = false"
+              class="w-6 h-6 rounded-full bg-black/20 hover:bg-black/30 flex items-center justify-center text-white/80 cursor-pointer"
+            >
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </transition>
+
       <!-- Hero Banner -->
       <div class="relative bg-slate-900 text-white">
         <div class="h-44 sm:h-56 w-full overflow-hidden relative">
@@ -199,6 +236,32 @@
                   Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
                 </template>
               </p>
+
+              <!-- Nearby Location Status / Distance Pill -->
+              <div v-if="userDistanceKm !== null" class="flex items-center gap-1 text-[10px] mt-1.5 font-bold">
+                <span
+                  :class="[
+                    'px-2 py-0.5 rounded-full flex items-center gap-1',
+                    isWithinGeofence
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                  ]"
+                >
+                  <i class="fa-solid fa-location-dot" :class="isWithinGeofence ? 'text-emerald-600' : 'text-slate-400'"></i>
+                  <span v-if="isWithinGeofence">Within 5 km Reward Zone ({{ userDistanceKm.toFixed(1) }} km away)</span>
+                  <span v-else>{{ userDistanceKm.toFixed(1) }} km away from restaurant</span>
+                </span>
+              </div>
+              <div v-else-if="!locationChecked" class="mt-1">
+                <button
+                  type="button"
+                  @click.stop="requestUserLocation"
+                  class="text-[10px] text-amber-700 hover:text-amber-900 font-bold underline flex items-center gap-1 cursor-pointer"
+                >
+                  <i class="fa-solid fa-location-crosshairs text-amber-600"></i>
+                  <span>Turn ON Location for 5 km Nearby Reward Alerts</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -434,67 +497,6 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loyalty & Rewards Banner Card -->
-      <div v-if="loyaltyStatus && loyaltyStatus.loyalty_enabled !== false" class="max-w-3xl mx-auto px-4 mt-3 mb-1">
-        <div
-          @click="openLoyaltyModal"
-          class="bg-gradient-to-r from-amber-500/10 via-orange-500/15 to-purple-500/15 hover:from-amber-500/20 hover:to-purple-500/20 border-2 border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow shrink-0 group-hover:scale-105 transition">
-              <i class="fa-solid fa-crown animate-pulse"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-extrabold text-xs sm:text-sm text-slate-900">
-                  Royalty Rewards Club
-                </span>
-                <span
-                  v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
-                  class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow"
-                >
-                  🎉 Ticket Ready to Spin!
-                </span>
-                <span
-                  v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0"
-                  class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-full"
-                >
-                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} Visits
-                </span>
-              </div>
-              <p class="text-[11px] text-slate-600 mt-0.5">
-                <template v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play">
-                  Aapke paas <strong>1 Lucky Reward Ticket</strong> ready hai! Spin karein aur discount jeetein!
-                </template>
-                <template v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0">
-                  {{ loyaltyStatus.customer.visits_remaining }} aur visit par Lucky Spinner / Scratch Card unlock hoga!
-                </template>
-                <template v-else>
-                  Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
-                </template>
-              </p>
-            </div>
-          </div>
-
-          <div class="shrink-0 flex items-center gap-2">
-            <button
-              v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
-              class="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <i class="fa-solid fa-dharmachakra animate-spin"></i>
-              <span>Spin & Win</span>
-            </button>
-            <button
-              v-else
-              class="px-3 py-1.5 bg-white text-slate-800 border border-slate-300 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
-            >
-              <i class="fa-solid fa-ticket text-amber-500"></i>
-              <span class="hidden sm:inline">View</span> Stamps
-            </button>
           </div>
         </div>
       </div>
@@ -791,67 +793,6 @@
                 Add to {{ currentTable }} Order • {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}
               </span>
               <span v-else>Confirm & Pay {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loyalty & Rewards Banner Card -->
-      <div v-if="loyaltyStatus && loyaltyStatus.loyalty_enabled !== false" class="max-w-3xl mx-auto px-4 mt-3 mb-1">
-        <div
-          @click="openLoyaltyModal"
-          class="bg-gradient-to-r from-amber-500/10 via-orange-500/15 to-purple-500/15 hover:from-amber-500/20 hover:to-purple-500/20 border-2 border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow shrink-0 group-hover:scale-105 transition">
-              <i class="fa-solid fa-crown animate-pulse"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-extrabold text-xs sm:text-sm text-slate-900">
-                  Royalty Rewards Club
-                </span>
-                <span
-                  v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
-                  class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow"
-                >
-                  🎉 Ticket Ready to Spin!
-                </span>
-                <span
-                  v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0"
-                  class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-full"
-                >
-                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} Visits
-                </span>
-              </div>
-              <p class="text-[11px] text-slate-600 mt-0.5">
-                <template v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play">
-                  Aapke paas <strong>1 Lucky Reward Ticket</strong> ready hai! Spin karein aur discount jeetein!
-                </template>
-                <template v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0">
-                  {{ loyaltyStatus.customer.visits_remaining }} aur visit par Lucky Spinner / Scratch Card unlock hoga!
-                </template>
-                <template v-else>
-                  Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
-                </template>
-              </p>
-            </div>
-          </div>
-
-          <div class="shrink-0 flex items-center gap-2">
-            <button
-              v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
-              class="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <i class="fa-solid fa-dharmachakra animate-spin"></i>
-              <span>Spin & Win</span>
-            </button>
-            <button
-              v-else
-              class="px-3 py-1.5 bg-white text-slate-800 border border-slate-300 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
-            >
-              <i class="fa-solid fa-ticket text-amber-500"></i>
-              <span class="hidden sm:inline">View</span> Stamps
             </button>
           </div>
         </div>
@@ -1644,7 +1585,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import QRCode from 'qrcode';
 import html2pdf from 'html2pdf.js';
-import { playSound, launchConfetti } from '../utils/notification.js';
+import { playSound, launchConfetti, sendSystemNotification, requestNotificationPermission } from '../utils/notification.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -1690,6 +1631,14 @@ const phoneCheckInput = ref(localStorage.getItem('qrmenu_customer_phone') || '')
 const phoneCheckLoading = ref(false);
 const claimingReward = ref(false);
 const mysteryScratchReward = ref(null);
+
+// 5 KM Geofence & Location Notification State
+const userLocation = ref(null);
+const userDistanceKm = ref(null);
+const isWithinGeofence = ref(false);
+const showNearbyAlert = ref(false);
+const locationChecked = ref(false);
+let geofenceWatchId = null;
 
 // Salon Booking & Slots state
 const salonSlots = ref([]);
@@ -2064,6 +2013,10 @@ const fetchLoyaltyStatus = async (phone) => {
           activeLoyaltyVoucher.value = JSON.parse(savedVoucher);
         } catch (e) {}
       }
+
+      if (userLocation.value) {
+        checkGeofenceNotification(userLocation.value.lat, userLocation.value.lng);
+      }
     }
   } catch (err) {
     console.error('Failed to load loyalty status', err);
@@ -2429,8 +2382,106 @@ const submitOrder = async () => {
   }
 };
 
+// 5 KM Geofence & Location Notification Methods
+const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in KM
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const checkGeofenceNotification = (lat, lng) => {
+  if (!restaurant.value) return;
+
+  const restLat = restaurant.value.latitude || loyaltyStatus.value?.latitude;
+  const restLng = restaurant.value.longitude || loyaltyStatus.value?.longitude;
+  const radius = restaurant.value.geofence_radius_km || loyaltyStatus.value?.geofence_radius_km || 5.0;
+
+  if (!restLat || !restLng) {
+    return;
+  }
+
+  const dist = calculateDistanceKm(lat, lng, restLat, restLng);
+  userDistanceKm.value = dist;
+  isWithinGeofence.value = dist <= radius;
+
+  if (isWithinGeofence.value) {
+    const cacheKey = `qrmenu_nearby_notif_${restaurant.value.id}`;
+    const lastNotified = localStorage.getItem(cacheKey);
+    const now = Date.now();
+
+    // Trigger notification if not notified in last 2 hours
+    if (!lastNotified || now - Number(lastNotified) > 2 * 60 * 60 * 1000) {
+      showNearbyAlert.value = true;
+      localStorage.setItem(cacheKey, String(now));
+      playSound('status_update');
+
+      // Web Push / Browser System Notification
+      sendSystemNotification(
+        `🎁 You're Near ${restaurant.value.name} (${dist.toFixed(1)} km)!`,
+        `You are within 5 km! Visit us today to spin the Lucky Wheel & claim exclusive discounts!`,
+        restaurant.value.logo_url || '/icon-192.png'
+      );
+    }
+  }
+};
+
+const requestUserLocation = async () => {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    locationChecked.value = true;
+    return;
+  }
+  await requestNotificationPermission();
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      locationChecked.value = true;
+      userLocation.value = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      };
+      checkGeofenceNotification(pos.coords.latitude, pos.coords.longitude);
+
+      if (!geofenceWatchId) {
+        geofenceWatchId = navigator.geolocation.watchPosition(
+          (p) => {
+            userLocation.value = {
+              lat: p.coords.latitude,
+              lng: p.coords.longitude,
+            };
+            checkGeofenceNotification(p.coords.latitude, p.coords.longitude);
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 30000, timeout: 27000 }
+        );
+      }
+    },
+    (err) => {
+      locationChecked.value = true;
+      console.log('Location permission denied or unavailable', err);
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+};
+
 onMounted(() => {
   fetchMenu();
+
+  // Auto-detect if location permission is already granted by browser
+  if (typeof navigator !== 'undefined' && 'permissions' in navigator && navigator.permissions.query) {
+    navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+      if (result.state === 'granted') {
+        requestUserLocation();
+      }
+    }).catch(() => {});
+  }
 });
 </script>
 

@@ -1055,6 +1055,71 @@
                   </button>
                 </div>
               </div>
+
+              <!-- Geofence 5 km Nearby Customer Notifications -->
+              <div class="space-y-2 md:col-span-2 pt-4 border-t border-slate-700/60">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <label class="text-xs font-bold text-white flex items-center gap-1.5">
+                      <i class="fa-solid fa-location-crosshairs text-amber-400"></i>
+                      <span>Nearby Customer Geofence Notification (5 km Radius)</span>
+                    </label>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                      Jab koi customer aapke store ke 5 km radius me hoga aur uski location on hogi, to use automatic reward & discount notification aayegi.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    @click="detectStoreLocation"
+                    :disabled="detectingLocation"
+                    class="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <i v-if="detectingLocation" class="fa-solid fa-circle-notch fa-spin"></i>
+                    <i v-else class="fa-solid fa-location-dot"></i>
+                    <span>{{ detectingLocation ? 'Detecting GPS...' : '📍 Auto-Detect Store GPS' }}</span>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Store Latitude</label>
+                    <input
+                      v-model="loyaltyConfig.latitude"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 28.6139"
+                      class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Store Longitude</label>
+                    <input
+                      v-model="loyaltyConfig.longitude"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 77.2090"
+                      class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Geofence Radius (KM)</label>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model.number="loyaltyConfig.geofence_radius_km"
+                        type="number"
+                        min="0.5"
+                        max="50"
+                        step="0.5"
+                        class="w-24 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                      />
+                      <span class="text-xs text-slate-400">KM (Default 5 KM)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- CUSTOM REWARDS & OFFERS MANAGER -->
@@ -3551,6 +3616,9 @@ const loyaltyConfig = ref({
   enabled: true,
   required_visits: 5,
   game_type: 'spinner',
+  latitude: null,
+  longitude: null,
+  geofence_radius_km: 5.0,
   rewards: [
     { id: 1, title: '₹100 Flat OFF', type: 'flat', value: 100, color: '#f59e0b', icon: 'fa-solid fa-gift' },
     { id: 2, title: '40% Mega Discount', type: 'percent', value: 40, color: '#10b981', icon: 'fa-solid fa-percent' },
@@ -3563,6 +3631,7 @@ const loyaltyConfig = ref({
 const loyaltyCustomers = ref([]);
 const loyaltyStats = ref({});
 const savingLoyalty = ref(false);
+const detectingLocation = ref(false);
 
 const showRewardModal = ref(false);
 const editingRewardIndex = ref(null);
@@ -3574,6 +3643,27 @@ const rewardForm = ref({
   icon: 'fa-solid fa-gift',
 });
 
+const detectStoreLocation = () => {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  detectingLocation.value = true;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      loyaltyConfig.value.latitude = parseFloat(pos.coords.latitude.toFixed(6));
+      loyaltyConfig.value.longitude = parseFloat(pos.coords.longitude.toFixed(6));
+      detectingLocation.value = false;
+      alert(`Store GPS coordinates detected!\nLatitude: ${loyaltyConfig.value.latitude}\nLongitude: ${loyaltyConfig.value.longitude}\n\nClick "Save Loyalty Rules" to store.`);
+    },
+    (err) => {
+      detectingLocation.value = false;
+      alert('Could not retrieve GPS location: ' + err.message);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+};
+
 const fetchLoyaltyData = async () => {
   try {
     const res = await axios.get('/owner/loyalty');
@@ -3581,6 +3671,9 @@ const fetchLoyaltyData = async () => {
       loyaltyConfig.value.enabled = res.data.loyalty_enabled;
       loyaltyConfig.value.required_visits = res.data.loyalty_required_visits;
       loyaltyConfig.value.game_type = res.data.loyalty_game_type;
+      loyaltyConfig.value.latitude = res.data.latitude || null;
+      loyaltyConfig.value.longitude = res.data.longitude || null;
+      loyaltyConfig.value.geofence_radius_km = res.data.geofence_radius_km || 5.0;
       loyaltyConfig.value.rewards = res.data.rewards || [];
       loyaltyCustomers.value = res.data.customers || [];
       loyaltyStats.value = res.data.stats || {};
@@ -3602,10 +3695,13 @@ const saveLoyaltySettings = async () => {
       loyalty_enabled: loyaltyConfig.value.enabled,
       loyalty_required_visits: loyaltyConfig.value.required_visits,
       loyalty_game_type: loyaltyConfig.value.game_type,
+      latitude: loyaltyConfig.value.latitude !== null && loyaltyConfig.value.latitude !== '' ? parseFloat(loyaltyConfig.value.latitude) : null,
+      longitude: loyaltyConfig.value.longitude !== null && loyaltyConfig.value.longitude !== '' ? parseFloat(loyaltyConfig.value.longitude) : null,
+      geofence_radius_km: loyaltyConfig.value.geofence_radius_km ? parseFloat(loyaltyConfig.value.geofence_radius_km) : 5.0,
       rewards: loyaltyConfig.value.rewards,
     });
     if (res.data.success) {
-      alert('Loyalty program settings saved successfully!');
+      alert('Loyalty program & 5 km geofence settings saved successfully!');
     }
   } catch (err) {
     alert(err.response?.data?.message || 'Failed to save loyalty settings');

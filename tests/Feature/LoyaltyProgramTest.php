@@ -220,4 +220,32 @@ class LoyaltyProgramTest extends TestCase
         $this->assertEquals('scratch', $this->restaurant->loyalty_game_type);
         $this->assertCount(3, $this->restaurant->loyalty_rewards);
     }
+
+    public function test_owner_can_configure_geofence_and_status_includes_coordinates(): void
+    {
+        $customRewards = [
+            ['id' => 1, 'title' => 'Flat ₹100 OFF', 'type' => 'flat', 'value' => 100, 'color' => '#10b981', 'icon' => 'fa-solid fa-gift'],
+            ['id' => 2, 'title' => '50% Mega Bumper', 'type' => 'percent', 'value' => 50, 'color' => '#ec4899', 'icon' => 'fa-solid fa-percent'],
+        ];
+
+        $updateResponse = $this->actingAs($this->owner)
+            ->putJson('/api/owner/loyalty', [
+                'loyalty_enabled' => true,
+                'loyalty_required_visits' => 5,
+                'loyalty_game_type' => 'spinner',
+                'latitude' => 28.6139,
+                'longitude' => 77.2090,
+                'geofence_radius_km' => 5.0,
+                'rewards' => $customRewards,
+            ]);
+
+        $updateResponse->assertOk();
+
+        $statusResponse = $this->getJson('/api/r/biryani-palace/loyalty-status');
+        $statusResponse->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('latitude', 28.6139)
+            ->assertJsonPath('longitude', 77.209)
+            ->assertJsonPath('geofence_radius_km', 5);
+    }
 }
