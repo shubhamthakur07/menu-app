@@ -3827,10 +3827,6 @@ const selectTab = (tabId) => {
   });
 };
 
-watch(tabs, () => {
-  checkTabsOverflow();
-});
-
 const tabs = computed(() => {
   const isSalon = restaurant.value?.business_type === 'salon';
   const list = [
@@ -3894,6 +3890,10 @@ const tabs = computed(() => {
   list.push({ id: 'settings', name: 'Settings', icon: 'fa-solid fa-gear' });
 
   return list;
+});
+
+watch(tabs, () => {
+  checkTabsOverflow();
 });
 
 const currentTableUrl = computed(() => {
