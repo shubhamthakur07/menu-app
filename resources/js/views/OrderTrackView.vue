@@ -79,7 +79,17 @@
               <span class="text-slate-400">Booked at {{ formatDate(order.created_at) }}</span>
             </div>
 
-            <p v-else class="text-xs text-slate-500 mt-1">{{ order.table_number }} • Placed at {{ formatDate(order.created_at) }}</p>
+            <div v-else class="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span class="text-xs text-slate-500 font-medium">{{ order.table_number }} • Placed at {{ formatDate(order.created_at) }}</span>
+              <button
+                v-if="order.table_number && order.restaurant?.enable_waiter_call !== false"
+                @click="showServiceBellModal = true"
+                class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-[11px] font-black shadow-xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <i class="fa-solid fa-bell text-[10px]"></i>
+                <span>{{ currentLang === 'hi' ? 'वेटर बुलाएं' : 'Call Waiter' }}</span>
+              </button>
+            </div>
           </div>
 
           <!-- Order Status Badge & Live Alert Pill -->
@@ -918,6 +928,131 @@
         </div>
       </div>
     </div>
+    <!-- Floating Call Waiter Button (Table Service Bell) -->
+    <div
+      v-if="order && order.table_number && order.restaurant?.enable_waiter_call !== false"
+      class="fixed bottom-6 left-4 z-40"
+    >
+      <button
+        @click="showServiceBellModal = true"
+        class="flex items-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-full shadow-2xl border-2 border-amber-400/80 font-black text-xs transition transform hover:scale-105 active:scale-95 cursor-pointer group"
+      >
+        <span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-xs shadow group-hover:animate-bounce">
+          <i class="fa-solid fa-bell"></i>
+        </span>
+        <span class="text-white font-bold">{{ currentLang === 'hi' ? 'वेटर बुलाएं' : 'Call Waiter' }}</span>
+      </button>
+    </div>
+
+    <!-- Table Service Bell Modal -->
+    <div
+      v-if="showServiceBellModal"
+      class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      @click.self="showServiceBellModal = false"
+    >
+      <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl text-slate-900 border border-slate-200">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-600 flex items-center justify-center text-base border border-amber-500/30">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-sm text-slate-900">
+                {{ currentLang === 'hi' ? 'टेबल सर्विस बेल' : 'Table Service Bell' }}
+              </h3>
+              <p class="text-[11px] text-slate-500">
+                {{ currentLang === 'hi' ? 'सीधे स्टाफ को रिक्वेस्ट भेजें' : 'Instant 1-tap staff alert for' }} <strong>{{ order?.table_number }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <button
+            @click="showServiceBellModal = false"
+            class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+          >
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>
+        </div>
+
+        <!-- Success Message -->
+        <div v-if="serviceBellSuccess" class="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 text-center space-y-1 mb-4">
+          <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg mx-auto shadow">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div class="font-black text-xs uppercase tracking-wide">
+            {{ currentLang === 'hi' ? 'स्टाफ को सूचित कर दिया गया है!' : 'Staff Alerted Successfully!' }}
+          </div>
+          <p class="text-[11px] text-emerald-700">
+            {{ currentLang === 'hi' ? 'वेटर जल्द ही आपकी टेबल पर पहुंच रहे हैं।' : 'A waiter will attend your table shortly.' }}
+          </p>
+        </div>
+
+        <!-- Request Options Grid -->
+        <div v-else class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">
+              {{ currentLang === 'hi' ? 'आपको क्या चाहिए?' : 'What do you need?' }}
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                v-for="opt in [
+                  { id: 'water', label: 'Drinking Water', hi: 'पीने का पानी', icon: 'fa-solid fa-glass-water', color: 'text-cyan-500' },
+                  { id: 'waiter', label: 'Call Waiter', hi: 'वेटर बुलाएं', icon: 'fa-solid fa-bell', color: 'text-amber-500' },
+                  { id: 'cutlery', label: 'Extra Cutlery', hi: 'चम्मच / प्लेट्स', icon: 'fa-solid fa-utensils', color: 'text-purple-500' },
+                  { id: 'bill', label: 'Get Bill', hi: 'बिल चाहिए', icon: 'fa-solid fa-file-invoice', color: 'text-emerald-500' },
+                  { id: 'cleaning', label: 'Clean Table', hi: 'टेबल साफ करें', icon: 'fa-solid fa-broom', color: 'text-blue-500' },
+                  { id: 'other', label: 'Other Help', hi: 'अन्य सहायता', icon: 'fa-solid fa-hand', color: 'text-rose-500' }
+                ]"
+                :key="opt.id"
+                type="button"
+                @click="selectedServiceType = opt.id"
+                :class="[
+                  'p-3 rounded-2xl border-2 flex items-center gap-2.5 transition text-left cursor-pointer',
+                  selectedServiceType === opt.id ? 'border-amber-500 bg-amber-50/70 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                ]"
+              >
+                <div :class="['text-base', opt.color]">
+                  <i :class="opt.icon"></i>
+                </div>
+                <div>
+                  <div class="font-black text-xs text-slate-900 leading-tight">
+                    {{ currentLang === 'hi' ? opt.hi : opt.label }}
+                  </div>
+                  <div class="text-[9px] text-slate-500">
+                    {{ currentLang === 'hi' ? opt.label : opt.hi }}
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Optional Notes -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              {{ currentLang === 'hi' ? 'कोई विशेष नोट? (वैकल्पिक)' : 'Special Request Note (Optional)' }}
+            </label>
+            <input
+              v-model="serviceBellNotes"
+              type="text"
+              :placeholder="currentLang === 'hi' ? 'उदा. ठंडा पानी, एक्स्ट्रा नैपकिन...' : 'e.g. Warm water, extra napkins, spicy chutney...'"
+              class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            />
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            @click="submitServiceCall"
+            :disabled="submittingServiceCall"
+            class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <i v-if="submittingServiceCall" class="fa-solid fa-circle-notch fa-spin"></i>
+            <i v-else class="fa-solid fa-paper-plane"></i>
+            <span>{{ currentLang === 'hi' ? 'रिक्वेस्ट भेजें' : 'Send Request to Staff' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -930,6 +1065,40 @@ import { playSound, sendSystemNotification, requestNotificationPermission } from
 
 const route = useRoute();
 const order = ref(null);
+const currentLang = ref(localStorage.getItem('qrmenu_lang') || 'en');
+
+// Table Service Bell (Call Waiter) State & Actions
+const showServiceBellModal = ref(false);
+const selectedServiceType = ref('water');
+const serviceBellNotes = ref('');
+const submittingServiceCall = ref(false);
+const serviceBellSuccess = ref(false);
+
+const submitServiceCall = async () => {
+  if (!order.value || !order.value.restaurant) return;
+  submittingServiceCall.value = true;
+  try {
+    const slug = order.value.restaurant.slug;
+    const res = await axios.post(`/r/${slug}/service-call`, {
+      table_number: order.value.table_number || 'Table 1',
+      service_type: selectedServiceType.value,
+      notes: serviceBellNotes.value,
+    });
+    if (res.data.success) {
+      playSound('status_update');
+      serviceBellSuccess.value = true;
+      setTimeout(() => {
+        serviceBellSuccess.value = false;
+        showServiceBellModal.value = false;
+        serviceBellNotes.value = '';
+      }, 3000);
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to submit service call');
+  } finally {
+    submittingServiceCall.value = false;
+  }
+};
 const upiString = ref(null);
 const upiQrDataUrl = ref('');
 const loading = ref(true);
