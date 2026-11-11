@@ -99,28 +99,56 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-2 overflow-x-auto no-scrollbar border-t border-slate-800/60 py-1">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          :class="[
-            'px-3.5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition flex items-center gap-2',
-            activeTab === tab.id
-              ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-          ]"
-        >
-          <i :class="tab.icon"></i>
-          <span>{{ tab.name }}</span>
-          <span
-            v-if="tab.badge && tab.badge > 0"
-            class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500 text-white font-extrabold"
+      <!-- Navigation Tabs with Horizontal Scroll Controls -->
+      <div class="relative w-full border-t border-slate-800/60 bg-slate-900/60">
+        <div class="max-w-full mx-auto px-2 sm:px-4 flex items-center gap-1.5 py-1">
+          <!-- Scroll Left Button -->
+          <button
+            @click="scrollTabs('left')"
+            class="shrink-0 w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition shadow-sm border border-slate-700/80 cursor-pointer"
+            title="Scroll Left"
           >
-            {{ tab.badge }}
-          </span>
-        </button>
+            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+          </button>
+
+          <!-- Tabs List Container -->
+          <div
+            ref="tabsNavRef"
+            @wheel.passive="handleTabsWheel"
+            class="flex-1 flex space-x-1 sm:space-x-1.5 overflow-x-auto py-1 scroll-smooth custom-tabs-scroll"
+          >
+            <button
+              v-for="tab in tabs"
+              :key="tab.id"
+              :id="`tab-btn-${tab.id}`"
+              @click="selectTab(tab.id)"
+              :class="[
+                'px-3 py-1.5 sm:px-3.5 sm:py-1.5 text-xs font-bold rounded-xl whitespace-nowrap transition flex items-center gap-1.5 shrink-0 cursor-pointer',
+                activeTab === tab.id
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+              ]"
+            >
+              <i :class="tab.icon"></i>
+              <span>{{ tab.name }}</span>
+              <span
+                v-if="tab.badge && tab.badge > 0"
+                class="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500 text-white font-extrabold"
+              >
+                {{ tab.badge }}
+              </span>
+            </button>
+          </div>
+
+          <!-- Scroll Right Button -->
+          <button
+            @click="scrollTabs('right')"
+            class="shrink-0 w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition shadow-sm border border-slate-700/80 cursor-pointer"
+            title="Scroll Right"
+          >
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -3756,13 +3784,42 @@ const fetchFeedbacks = async () => {
   }
 };
 
+const tabsNavRef = ref(null);
+
+const scrollTabs = (direction) => {
+  if (!tabsNavRef.value) return;
+  const scrollAmount = 260;
+  if (direction === 'left') {
+    tabsNavRef.value.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  } else {
+    tabsNavRef.value.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  }
+};
+
+const handleTabsWheel = (e) => {
+  if (!tabsNavRef.value) return;
+  if (e.deltaY !== 0) {
+    tabsNavRef.value.scrollLeft += e.deltaY;
+  }
+};
+
+const selectTab = (tabId) => {
+  activeTab.value = tabId;
+  nextTick(() => {
+    const el = document.getElementById(`tab-btn-${tabId}`);
+    if (el && tabsNavRef.value) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  });
+};
+
 const tabs = computed(() => {
   const isSalon = restaurant.value?.business_type === 'salon';
   const list = [
     { id: 'overview', name: 'Overview', icon: 'fa-solid fa-chart-pie' },
     {
       id: 'orders',
-      name: isSalon ? 'Appointments & Queue' : 'Live Orders',
+      name: isSalon ? 'Appointments' : 'Live Orders',
       icon: isSalon ? 'fa-solid fa-calendar-check' : 'fa-solid fa-fire-burner',
       badge: stats.value.pending_orders_count || 0
     },
@@ -3789,18 +3846,18 @@ const tabs = computed(() => {
   list.push(
     {
       id: 'tables',
-      name: isSalon ? 'Chairs & Stylists' : 'Floor & Tables',
+      name: isSalon ? 'Chairs' : 'Floor & Tables',
       icon: isSalon ? 'fa-solid fa-chair' : 'fa-solid fa-chair',
       badge: tableStats.value.occupied || 0
     },
     {
       id: 'qrcodes',
-      name: isSalon ? 'Shop QR Standee' : 'Table QR Generator',
+      name: isSalon ? 'QR Standee' : 'QR Generator',
       icon: 'fa-solid fa-qrcode'
     },
     {
       id: 'menu',
-      name: isSalon ? 'Services & Rates' : 'Menu Dishes',
+      name: isSalon ? 'Services' : 'Dishes',
       icon: isSalon ? 'fa-solid fa-scissors' : 'fa-solid fa-utensils'
     },
     { id: 'categories', name: 'Categories', icon: 'fa-solid fa-list' },
@@ -3816,7 +3873,7 @@ const tabs = computed(() => {
     });
   }
 
-  list.push({ id: 'settings', name: 'Settings & Timings', icon: 'fa-solid fa-gear' });
+  list.push({ id: 'settings', name: 'Settings', icon: 'fa-solid fa-gear' });
 
   return list;
 });
@@ -4535,6 +4592,21 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.custom-tabs-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-tabs-scroll::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 9999px;
+}
+.custom-tabs-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.4);
+  border-radius: 9999px;
+}
+.custom-tabs-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.8);
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
