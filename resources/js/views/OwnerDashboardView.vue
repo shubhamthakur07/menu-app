@@ -1264,6 +1264,415 @@
           </div>
         </div>
 
+        <!-- TAB: KITCHEN DISPLAY SCREEN (KDS MODE) -->
+        <div v-if="activeTab === 'kds'" class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-800/80 p-5 rounded-3xl border border-slate-700/80">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg border border-purple-500/30">
+                  <i class="fa-solid fa-desktop"></i>
+                </div>
+                <div>
+                  <h2 class="text-lg font-black text-white flex items-center gap-2">
+                    <span>Kitchen Display System (KDS)</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-purple-500/20 text-purple-300 font-extrabold">LIVE COOKING</span>
+                  </h2>
+                  <p class="text-xs text-slate-400">Tablet / Monitor interface for kitchen chefs & prep staff</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700 text-xs">
+                <button
+                  v-for="kFilter in [
+                    { id: 'all', label: 'All Active' },
+                    { id: 'dine_in', label: 'Dine-In' },
+                    { id: 'takeaway', label: 'Takeaway' },
+                    { id: 'delivery', label: 'Delivery' }
+                  ]"
+                  :key="kFilter.id"
+                  @click="kdsFilter = kFilter.id"
+                  :class="[
+                    'px-3 py-1.5 rounded-lg font-bold transition text-xs',
+                    kdsFilter === kFilter.id ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  ]"
+                >
+                  {{ kFilter.label }}
+                </button>
+              </div>
+              <button
+                @click="fetchOrders(false)"
+                class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                title="Refresh KDS"
+              >
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- KDS Orders Grid -->
+          <div v-if="activeCookingOrders.length === 0" class="text-center py-16 bg-slate-800/40 rounded-3xl border border-dashed border-slate-700">
+            <div class="w-16 h-16 rounded-full bg-slate-800 text-purple-400 flex items-center justify-center text-2xl mx-auto mb-3">
+              <i class="fa-solid fa-utensils"></i>
+            </div>
+            <h3 class="text-base font-bold text-white">All Kitchen Orders Clear!</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">No orders currently waiting to be prepared. New orders placed by customers will appear here automatically with buzzer sound.</p>
+          </div>
+
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div
+              v-for="kOrder in activeCookingOrders"
+              :key="kOrder.id"
+              :class="[
+                'bg-slate-800/90 rounded-2xl border-2 p-4 shadow-xl flex flex-col justify-between transition-all',
+                kOrder.order_status === 'pending' ? 'border-amber-500/80 bg-amber-500/5' : (kOrder.order_status === 'preparing' ? 'border-orange-500/80 bg-orange-500/5' : 'border-purple-500/80 bg-purple-500/5')
+              ]"
+            >
+              <div>
+                <!-- Ticket Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-700/80 mb-3">
+                  <div>
+                    <span class="text-xl font-black text-white font-mono tracking-tight block">
+                      {{ kOrder.table_number || (kOrder.order_type === 'delivery' ? 'Home Delivery' : 'Takeaway') }}
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-mono">#{{ kOrder.order_code }}</span>
+                  </div>
+                  <div class="text-right">
+                    <span
+                      :class="[
+                        'text-[10px] font-black uppercase px-2 py-0.5 rounded-full inline-block',
+                        getElapsedMinutes(kOrder.created_at) > 20 ? 'bg-rose-500 text-white animate-pulse' : (getElapsedMinutes(kOrder.created_at) > 10 ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500/20 text-emerald-300')
+                      ]"
+                    >
+                      <i class="fa-regular fa-clock mr-1"></i>{{ getElapsedMinutes(kOrder.created_at) }} min ago
+                    </span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5 font-bold uppercase">{{ kOrder.order_status }}</span>
+                  </div>
+                </div>
+
+                <!-- Customer Kitchen Note -->
+                <div v-if="kOrder.special_notes" class="mb-3 p-2 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-200 text-xs font-semibold">
+                  <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ kOrder.special_notes }}
+                </div>
+
+                <!-- Dishes List -->
+                <div class="space-y-2 mb-4">
+                  <div
+                    v-for="item in kOrder.items"
+                    :key="item.id"
+                    class="flex items-start justify-between bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/50"
+                  >
+                    <div class="flex items-start gap-2.5">
+                      <span class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                        x{{ item.quantity }}
+                      </span>
+                      <div>
+                        <div class="text-xs font-bold text-white leading-tight">{{ item.item_name }}</div>
+                        <div v-if="item.food_type" class="text-[10px] text-slate-400 uppercase font-semibold mt-0.5">{{ item.food_type }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fast 1-Tap KDS Progression Buttons -->
+              <div class="pt-3 border-t border-slate-700/80 space-y-2">
+                <button
+                  v-if="kOrder.order_status === 'pending'"
+                  @click="updateOrderStatus(kOrder.id, 'accepted')"
+                  class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow"
+                >
+                  <i class="fa-solid fa-check"></i>
+                  <span>Accept & Start Prep</span>
+                </button>
+
+                <button
+                  v-if="['pending', 'accepted'].includes(kOrder.order_status)"
+                  @click="updateOrderStatus(kOrder.id, 'preparing')"
+                  class="w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow"
+                >
+                  <i class="fa-solid fa-fire-burner"></i>
+                  <span>In Cooking / Wok</span>
+                </button>
+
+                <button
+                  v-if="kOrder.order_status === 'preparing'"
+                  @click="updateOrderStatus(kOrder.id, 'ready')"
+                  class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow"
+                >
+                  <i class="fa-solid fa-bell"></i>
+                  <span>Order Ready for Serving 🔔</span>
+                </button>
+
+                <button
+                  v-if="['ready', 'preparing'].includes(kOrder.order_status)"
+                  @click="updateOrderStatus(kOrder.id, 'completed')"
+                  class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow"
+                >
+                  <i class="fa-solid fa-check-double"></i>
+                  <span>Served / Picked Up ✔</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: TABLE SERVICE CALLS (BELL / CALL WAITER) -->
+        <div v-if="activeTab === 'service_calls'" class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-800/80 p-5 rounded-3xl border border-slate-700/80">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30">
+                  <i class="fa-solid fa-bell"></i>
+                </div>
+                <div>
+                  <h2 class="text-lg font-black text-white flex items-center gap-2">
+                    <span>Table Service Bell Calls</span>
+                    <span
+                      v-if="pendingCallsCount > 0"
+                      class="px-2 py-0.5 rounded-full text-[10px] bg-rose-500 text-white font-extrabold animate-bounce"
+                    >
+                      {{ pendingCallsCount }} PENDING
+                    </span>
+                  </h2>
+                  <p class="text-xs text-slate-400">Live requests from guests seated at tables (Water, Cutlery, Waiter, Bill)</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700 text-xs">
+                <button
+                  @click="serviceCallsFilter = 'all'; fetchServiceCalls(false)"
+                  :class="[
+                    'px-3 py-1.5 rounded-lg font-bold transition text-xs',
+                    serviceCallsFilter === 'all' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                  ]"
+                >
+                  All Calls
+                </button>
+                <button
+                  @click="serviceCallsFilter = 'pending'; fetchServiceCalls(false)"
+                  :class="[
+                    'px-3 py-1.5 rounded-lg font-bold transition text-xs',
+                    serviceCallsFilter === 'pending' ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
+                  ]"
+                >
+                  Pending Only
+                </button>
+              </div>
+
+              <button
+                @click="clearCompletedCalls"
+                class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-rose-300 rounded-xl text-xs font-bold transition border border-rose-500/30"
+              >
+                <i class="fa-solid fa-trash-can mr-1"></i> Clear Attended
+              </button>
+
+              <button
+                @click="fetchServiceCalls(false)"
+                class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition"
+                title="Refresh"
+              >
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Service Calls List -->
+          <div v-if="serviceCalls.length === 0" class="text-center py-16 bg-slate-800/40 rounded-3xl border border-dashed border-slate-700">
+            <div class="w-16 h-16 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center text-2xl mx-auto mb-3">
+              <i class="fa-solid fa-bell-slash"></i>
+            </div>
+            <h3 class="text-base font-bold text-white">No Table Service Calls</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">When diners tap "Call Waiter", "Water", or "Bill" on their phone, it will alert staff here with a chime sound.</p>
+          </div>
+
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              v-for="call in serviceCalls"
+              :key="call.id"
+              :class="[
+                'bg-slate-800/90 rounded-2xl border-2 p-5 shadow-lg flex flex-col justify-between transition-all',
+                call.status === 'pending' ? 'border-amber-400/80 bg-amber-500/5 shadow-amber-500/10' : (call.status === 'attended' ? 'border-blue-500/60 bg-blue-500/5' : 'border-slate-700/60 opacity-70')
+              ]"
+            >
+              <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-700/60 mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg font-black text-white font-mono">{{ call.table_number }}</span>
+                    <span
+                      :class="[
+                        'text-[10px] font-black uppercase px-2 py-0.5 rounded-full',
+                        call.status === 'pending' ? 'bg-amber-400 text-slate-950 animate-pulse' : (call.status === 'attended' ? 'bg-blue-500/20 text-blue-300' : 'bg-slate-700 text-slate-400')
+                      ]"
+                    >
+                      {{ call.status }}
+                    </span>
+                  </div>
+                  <span class="text-[11px] text-slate-400">
+                    {{ formatDate(call.created_at) }}
+                  </span>
+                </div>
+
+                <!-- Service Request Type -->
+                <div class="flex items-center gap-3 p-3 bg-slate-900/80 rounded-xl border border-slate-700/60 mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg shrink-0">
+                    <i v-if="call.service_type === 'water'" class="fa-solid fa-glass-water text-cyan-400"></i>
+                    <i v-else-if="call.service_type === 'bill'" class="fa-solid fa-file-invoice text-emerald-400"></i>
+                    <i v-else-if="call.service_type === 'cutlery'" class="fa-solid fa-utensils text-purple-400"></i>
+                    <i v-else-if="call.service_type === 'cleaning'" class="fa-solid fa-broom text-blue-400"></i>
+                    <i v-else class="fa-solid fa-bell text-amber-400"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-black uppercase tracking-wider text-white">
+                      {{ call.service_type === 'water' ? 'Water Needed 💧' : (call.service_type === 'bill' ? 'Bill Requested 🧾' : (call.service_type === 'cutlery' ? 'Extra Cutlery 🍴' : (call.service_type === 'cleaning' ? 'Table Clean 🧹' : 'Waiter Service 🙋'))) }}
+                    </div>
+                    <div v-if="call.notes" class="text-xs text-amber-200 mt-0.5 italic">"{{ call.notes }}"</div>
+                    <div v-else class="text-[11px] text-slate-400">Standard table service request</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="pt-3 border-t border-slate-700/60 flex gap-2">
+                <button
+                  v-if="call.status === 'pending'"
+                  @click="updateServiceCallStatus(call.id, 'attended')"
+                  class="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <i class="fa-solid fa-user-check"></i>
+                  <span>Mark Attending</span>
+                </button>
+                <button
+                  v-if="call.status !== 'completed'"
+                  @click="updateServiceCallStatus(call.id, 'completed')"
+                  class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <i class="fa-solid fa-check"></i>
+                  <span>Done / Resolved</span>
+                </button>
+                <span v-else class="w-full text-center text-xs text-slate-400 font-semibold py-1">
+                  <i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Resolved
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: CUSTOMER REVIEWS & FEEDBACK -->
+        <div v-if="activeTab === 'reviews'" class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-800/80 p-5 rounded-3xl border border-slate-700/80">
+            <div>
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30">
+                  <i class="fa-solid fa-star"></i>
+                </div>
+                <div>
+                  <h2 class="text-lg font-black text-white flex items-center gap-2">
+                    <span>Customer Reviews & Google Booster</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-extrabold">BOOSTER ACTIVE</span>
+                  </h2>
+                  <p class="text-xs text-slate-400">Ratings, reviews, and smart filter redirect stats</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              @click="fetchFeedbacks"
+              class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto"
+            >
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Refresh Reviews</span>
+            </button>
+          </div>
+
+          <!-- Rating Stats Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow text-center">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Rating</span>
+              <span class="text-2xl font-black text-amber-400 font-mono flex items-center justify-center gap-1">
+                ⭐ {{ feedbackStats.average_rating || '5.0' }}
+              </span>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow text-center">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Ratings</span>
+              <span class="text-2xl font-black text-white font-mono">{{ feedbackStats.total || 0 }}</span>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow text-center">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">5-Star & 4-Star</span>
+              <span class="text-2xl font-black text-emerald-400 font-mono">{{ (feedbackStats.five_star || 0) + (feedbackStats.four_star || 0) }}</span>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 shadow text-center">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Private Intercepted</span>
+              <span class="text-2xl font-black text-rose-400 font-mono">{{ feedbackStats.below_four || 0 }}</span>
+            </div>
+          </div>
+
+          <!-- Booster Shield Banner -->
+          <div class="p-4 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-emerald-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 text-sm">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="text-xs">
+              <span class="font-bold text-white block mb-0.5">How Smart Reputation Protection Works:</span>
+              <span class="text-slate-300">
+                Customers rating 4 or 5 stars are instantly prompted to post directly on your Google Maps listing. Any customer who rates 1-3 stars submits private management feedback here so you can reach out to make things right before it ever hurts your public rating!
+              </span>
+            </div>
+          </div>
+
+          <!-- Reviews Table -->
+          <div class="bg-slate-800/80 rounded-3xl border border-slate-700 p-5 shadow-xl">
+            <div v-if="feedbacks.length === 0" class="text-center py-10 text-slate-400 text-xs">
+              <i class="fa-solid fa-comment-dots text-3xl text-slate-600 mb-2 block"></i>
+              No reviews submitted yet. When customers rate their meal on the tracking page, their reviews will show here.
+            </div>
+
+            <div v-else class="space-y-3">
+              <div
+                v-for="fb in feedbacks"
+                :key="fb.id"
+                class="p-4 bg-slate-900/70 border border-slate-700/60 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-bold text-white text-xs">{{ fb.customer_name || 'Guest Diner' }}</span>
+                    <span v-if="fb.customer_phone" class="text-[11px] text-slate-400 font-mono">{{ fb.customer_phone }}</span>
+                    <span v-if="fb.order_code" class="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded font-mono">#{{ fb.order_code }}</span>
+                    <span
+                      :class="[
+                        'text-[10px] font-extrabold px-2 py-0.5 rounded-full',
+                        fb.redirected_to_google ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                      ]"
+                    >
+                      {{ fb.redirected_to_google ? 'Redirected to Google Maps ⭐' : 'Private Manager Feedback 🔒' }}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-1 mb-1.5">
+                    <span v-for="star in 5" :key="star" :class="star <= fb.rating ? 'text-amber-400' : 'text-slate-700'" class="text-xs">
+                      ★
+                    </span>
+                    <span class="text-[11px] text-slate-400 ml-1">({{ fb.rating }} / 5)</span>
+                  </div>
+
+                  <p v-if="fb.comment" class="text-xs text-slate-200 italic">"{{ fb.comment }}"</p>
+                  <p v-else class="text-[11px] text-slate-500">No comment written</p>
+                </div>
+
+                <div class="text-[11px] text-slate-400 shrink-0 self-end sm:self-center">
+                  {{ formatDate(fb.created_at) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- TAB 6: RESTAURANT & PAYMENT SETTINGS -->
         <div v-if="activeTab === 'settings'" class="max-w-3xl space-y-6">
           <div>
@@ -1558,6 +1967,144 @@
                     class="w-4 h-4 accent-amber-500 rounded cursor-pointer"
                   />
                 </label>
+              </div>
+            </div>
+
+            <!-- Advanced App Features & Owner Toggles Section -->
+            <div class="pt-4 border-t border-slate-700/80">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="fa-solid fa-sliders"></i> Smart Restaurant Features (Owner Control)
+                </h3>
+                <span class="text-[10px] text-slate-400">Toggle ON/OFF as per your outlet's needs</span>
+              </div>
+
+              <div class="space-y-3">
+                <!-- Toggle 1: Table Service Bell -->
+                <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                  <label class="flex items-center justify-between cursor-pointer gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-amber-400"></i>
+                        <span class="text-xs font-bold text-white">Table Service Bell (Call Waiter / Water / Bill)</span>
+                        <span :class="['text-[10px] font-extrabold px-2 py-0.5 rounded-full', settingsForm.enable_waiter_call ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400']">
+                          {{ settingsForm.enable_waiter_call ? 'ENABLED' : 'DISABLED' }}
+                        </span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 block mt-1">
+                        Adds a floating bell icon on customer's phone to request water, call waiter, ask for cutlery, or request the bill in 1-tap.
+                      </span>
+                    </div>
+                    <input type="checkbox" v-model="settingsForm.enable_waiter_call" class="w-5 h-5 accent-amber-500 rounded cursor-pointer shrink-0" />
+                  </label>
+                </div>
+
+                <!-- Toggle 2: Smart Google Reviews 5-Star Booster -->
+                <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80 space-y-3">
+                  <label class="flex items-center justify-between cursor-pointer gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-star text-amber-400"></i>
+                        <span class="text-xs font-bold text-white">Smart Google Reviews Booster (5-Star Filter)</span>
+                        <span :class="['text-[10px] font-extrabold px-2 py-0.5 rounded-full', settingsForm.enable_google_reviews ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400']">
+                          {{ settingsForm.enable_google_reviews ? 'ENABLED' : 'DISABLED' }}
+                        </span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 block mt-1">
+                        Happy customers (4 & 5 stars) are redirected to post on Google Maps! Low ratings (1-3 stars) stay private as manager feedback so negative reviews don't hit Google.
+                      </span>
+                    </div>
+                    <input type="checkbox" v-model="settingsForm.enable_google_reviews" class="w-5 h-5 accent-amber-500 rounded cursor-pointer shrink-0" />
+                  </label>
+
+                  <div v-if="settingsForm.enable_google_reviews" class="pt-2 border-t border-slate-800">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">
+                      Google Maps Review URL (where 5-star diners will be redirected)
+                    </label>
+                    <input
+                      v-model="settingsForm.google_review_url"
+                      type="url"
+                      placeholder="e.g. https://g.page/r/your-restaurant/review or https://maps.app.goo.gl/..."
+                      class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <!-- Toggle 3: WhatsApp Digital Bill Sharing -->
+                <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                  <label class="flex items-center justify-between cursor-pointer gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-emerald-400"></i>
+                        <span class="text-xs font-bold text-white">WhatsApp Digital Bill Sharing</span>
+                        <span :class="['text-[10px] font-extrabold px-2 py-0.5 rounded-full', settingsForm.enable_whatsapp_bill ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400']">
+                          {{ settingsForm.enable_whatsapp_bill ? 'ENABLED' : 'DISABLED' }}
+                        </span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 block mt-1">
+                        Allows customers to share their itemized bill & receipt directly to WhatsApp with 1 tap. Saves paper!
+                      </span>
+                    </div>
+                    <input type="checkbox" v-model="settingsForm.enable_whatsapp_bill" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer shrink-0" />
+                  </label>
+                </div>
+
+                <!-- Toggle 4: Split Bill with Friends -->
+                <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                  <label class="flex items-center justify-between cursor-pointer gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-users text-cyan-400"></i>
+                        <span class="text-xs font-bold text-white">Split Bill with Friends (Equal Share & UPI QR)</span>
+                        <span :class="['text-[10px] font-extrabold px-2 py-0.5 rounded-full', settingsForm.enable_split_bill ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400']">
+                          {{ settingsForm.enable_split_bill ? 'ENABLED' : 'DISABLED' }}
+                        </span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 block mt-1">
+                        Lets dining groups split the total bill equally between 2-10 people with instant per-person UPI QR codes and WhatsApp share.
+                      </span>
+                    </div>
+                    <input type="checkbox" v-model="settingsForm.enable_split_bill" class="w-5 h-5 accent-cyan-500 rounded cursor-pointer shrink-0" />
+                  </label>
+                </div>
+
+                <!-- Toggle 5: Voice Search & Multi-Language -->
+                <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                  <label class="flex items-center justify-between cursor-pointer gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-microphone text-rose-400"></i>
+                        <span class="text-xs font-bold text-white">Voice Search & Hindi / English Language Toggle</span>
+                        <span :class="['text-[10px] font-extrabold px-2 py-0.5 rounded-full', settingsForm.enable_voice_search ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400']">
+                          {{ settingsForm.enable_voice_search ? 'ENABLED' : 'DISABLED' }}
+                        </span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 block mt-1">
+                        Allows customers to speak dish names into the search bar and toggle between English and Hindi menu views.
+                      </span>
+                    </div>
+                    <input type="checkbox" v-model="settingsForm.enable_voice_search" class="w-5 h-5 accent-rose-500 rounded cursor-pointer shrink-0" />
+                  </label>
+                </div>
+
+                <!-- Toggle 6: Kitchen Display Screen (KDS Mode) -->
+                <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-700/80">
+                  <label class="flex items-center justify-between cursor-pointer gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-desktop text-purple-400"></i>
+                        <span class="text-xs font-bold text-white">Kitchen Display System (KDS Screen Tab)</span>
+                        <span :class="['text-[10px] font-extrabold px-2 py-0.5 rounded-full', settingsForm.enable_kds ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-400']">
+                          {{ settingsForm.enable_kds ? 'ENABLED' : 'DISABLED' }}
+                        </span>
+                      </div>
+                      <span class="text-[11px] text-slate-400 block mt-1">
+                        Unlocks a dedicated full-screen Kitchen Display tab for chef/kitchen tablets with real-time cooking timers, big order tickets, and 1-tap ready buttons.
+                      </span>
+                    </div>
+                    <input type="checkbox" v-model="settingsForm.enable_kds" class="w-5 h-5 accent-purple-500 rounded cursor-pointer shrink-0" />
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -3084,9 +3631,109 @@ const bulkTableForm = ref({
 const selectedTableNumber = ref('Table 1');
 const qrDataUrl = ref('');
 
+// Kitchen Display System (KDS) Logic
+const kdsFilter = ref('all');
+const activeCookingOrders = computed(() => {
+  const list = Array.isArray(orders.value) ? orders.value : (orders.value?.data || []);
+  return list.filter(o => {
+    const isActive = ['pending', 'accepted', 'preparing', 'ready'].includes(o.order_status);
+    if (!isActive) return false;
+    if (kdsFilter.value !== 'all' && o.order_type !== kdsFilter.value) return false;
+    return true;
+  });
+});
+const activeCookingOrdersCount = computed(() => {
+  const list = Array.isArray(orders.value) ? orders.value : (orders.value?.data || []);
+  return list.filter(o => ['pending', 'accepted', 'preparing', 'ready'].includes(o.order_status)).length;
+});
+const getElapsedMinutes = (dateStr) => {
+  if (!dateStr) return 0;
+  const created = new Date(dateStr).getTime();
+  const now = Date.now();
+  return Math.max(0, Math.floor((now - created) / 60000));
+};
+
+// Table Service Calls (Call Waiter / Water / Cutlery / Bill)
+const serviceCalls = ref([]);
+const pendingCallsCount = ref(0);
+const serviceCallsFilter = ref('all');
+const knownCallIds = ref(new Set());
+
+const fetchServiceCalls = async (silent = false) => {
+  try {
+    const res = await axios.get('/owner/service-calls', {
+      params: { status: serviceCallsFilter.value }
+    });
+    if (res.data) {
+      const incoming = res.data.data || [];
+      pendingCallsCount.value = res.data.pending_count || 0;
+
+      // Brand new pending call notification sound & toast
+      const newCalls = incoming.filter(c => c.status === 'pending' && !knownCallIds.value.has(c.id));
+      if (newCalls.length > 0 && knownCallIds.value.size > 0) {
+        playSound('service_bell');
+        const newest = newCalls[0];
+        sendSystemNotification('Table Service Bell! 🛎️', `${newest.table_number}: ${newest.service_type.toUpperCase()}`);
+        showNewOrderToast({
+          type: 'new_order',
+          title: 'TABLE SERVICE BELL! 🛎️',
+          code: newest.table_number,
+          location: `Need: ${newest.service_type.toUpperCase()}`,
+          amount: '0',
+          customer: newest.notes || 'Table guest requesting service',
+        });
+      }
+
+      incoming.forEach(c => knownCallIds.value.add(c.id));
+      serviceCalls.value = incoming;
+    }
+  } catch (err) {
+    if (!silent) console.error('Failed to load service calls', err);
+  }
+};
+
+const updateServiceCallStatus = async (id, status) => {
+  try {
+    const res = await axios.patch(`/owner/service-calls/${id}/status`, { status });
+    if (res.data.success) {
+      await fetchServiceCalls(true);
+    }
+  } catch (err) {
+    alert('Failed to update service call status');
+  }
+};
+
+const clearCompletedCalls = async () => {
+  if (!confirm('Clear all attended and completed calls?')) return;
+  try {
+    const res = await axios.delete('/owner/service-calls/clear-completed');
+    if (res.data.success) {
+      await fetchServiceCalls(true);
+    }
+  } catch (err) {
+    alert('Failed to clear completed calls');
+  }
+};
+
+// Customer Reviews & Feedback
+const feedbacks = ref([]);
+const feedbackStats = ref({ total: 0, average_rating: 0, five_star: 0, four_star: 0, below_four: 0 });
+
+const fetchFeedbacks = async () => {
+  try {
+    const res = await axios.get('/owner/feedbacks');
+    if (res.data) {
+      feedbacks.value = res.data.data || [];
+      feedbackStats.value = res.data.stats || feedbackStats.value;
+    }
+  } catch (err) {
+    console.error('Failed to load feedbacks', err);
+  }
+};
+
 const tabs = computed(() => {
   const isSalon = restaurant.value?.business_type === 'salon';
-  return [
+  const list = [
     { id: 'overview', name: 'Overview', icon: 'fa-solid fa-chart-pie' },
     {
       id: 'orders',
@@ -3094,6 +3741,27 @@ const tabs = computed(() => {
       icon: isSalon ? 'fa-solid fa-calendar-check' : 'fa-solid fa-fire-burner',
       badge: stats.value.pending_orders_count || 0
     },
+  ];
+
+  if (restaurant.value?.enable_kds) {
+    list.push({
+      id: 'kds',
+      name: 'Kitchen (KDS)',
+      icon: 'fa-solid fa-desktop text-purple-400',
+      badge: activeCookingOrdersCount.value || 0
+    });
+  }
+
+  if (restaurant.value?.enable_waiter_call) {
+    list.push({
+      id: 'service_calls',
+      name: 'Bell Calls',
+      icon: 'fa-solid fa-bell text-amber-400',
+      badge: pendingCallsCount.value || 0
+    });
+  }
+
+  list.push(
     {
       id: 'tables',
       name: isSalon ? 'Chairs & Stylists' : 'Floor & Tables',
@@ -3111,9 +3779,21 @@ const tabs = computed(() => {
       icon: isSalon ? 'fa-solid fa-scissors' : 'fa-solid fa-utensils'
     },
     { id: 'categories', name: 'Categories', icon: 'fa-solid fa-list' },
-    { id: 'loyalty', name: 'Loyalty Rewards', icon: 'fa-solid fa-crown text-amber-400' },
-    { id: 'settings', name: 'Settings & Timings', icon: 'fa-solid fa-gear' },
-  ];
+    { id: 'loyalty', name: 'Loyalty Rewards', icon: 'fa-solid fa-crown text-amber-400' }
+  );
+
+  if (restaurant.value?.enable_google_reviews) {
+    list.push({
+      id: 'reviews',
+      name: 'Reviews',
+      icon: 'fa-solid fa-star text-amber-400',
+      badge: (feedbackStats.value?.below_four || 0) > 0 ? feedbackStats.value.below_four : 0
+    });
+  }
+
+  list.push({ id: 'settings', name: 'Settings & Timings', icon: 'fa-solid fa-gear' });
+
+  return list;
 });
 
 const currentTableUrl = computed(() => {
@@ -3156,6 +3836,10 @@ watch(activeTab, (tab) => {
     fetchCategories();
   } else if (tab === 'loyalty') {
     fetchLoyaltyData();
+  } else if (tab === 'service_calls') {
+    fetchServiceCalls();
+  } else if (tab === 'reviews') {
+    fetchFeedbacks();
   }
 });
 
@@ -3266,6 +3950,9 @@ const startAutoPoll = () => {
     isPolling = true;
     try {
       await fetchOrders(true);
+      if (restaurant.value?.enable_waiter_call) {
+        await fetchServiceCalls(true);
+      }
     } finally {
       isPolling = false;
     }

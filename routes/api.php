@@ -1,16 +1,20 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CustomerFeedbackController;
 use App\Http\Controllers\LoyaltyProgramController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\CategoryController;
+use App\Http\Controllers\Owner\CustomerFeedbackController as OwnerFeedbackController;
 use App\Http\Controllers\Owner\LoyaltyController as OwnerLoyaltyController;
 use App\Http\Controllers\Owner\MenuItemController;
 use App\Http\Controllers\Owner\MenuScanController;
 use App\Http\Controllers\Owner\OwnerOrderController;
 use App\Http\Controllers\Owner\RestaurantController;
 use App\Http\Controllers\Owner\TableController;
+use App\Http\Controllers\Owner\TableServiceCallController as OwnerTableServiceCallController;
 use App\Http\Controllers\PublicMenuController;
+use App\Http\Controllers\TableServiceCallController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +36,10 @@ Route::post('/orders/{orderCode}/apply-game-reward', [OrderController::class, 'a
 // Customer Loyalty Program Routes
 Route::get('/r/{slug}/loyalty-status', [LoyaltyProgramController::class, 'status']);
 Route::post('/r/{slug}/claim-loyalty-reward', [LoyaltyProgramController::class, 'claim']);
+
+// Customer Table Service Calls & Feedback Routes
+Route::post('/r/{slug}/service-call', [TableServiceCallController::class, 'store']);
+Route::post('/r/{slug}/feedback', [CustomerFeedbackController::class, 'store']);
 
 /*
 |--------------------------------------------------------------------------
@@ -79,6 +87,14 @@ Route::middleware('auth')->group(function () {
     // Loyalty Program Management
     Route::get('/owner/loyalty', [OwnerLoyaltyController::class, 'index']);
     Route::put('/owner/loyalty', [OwnerLoyaltyController::class, 'update']);
+
+    // Table Service Calls Management
+    Route::get('/owner/service-calls', [OwnerTableServiceCallController::class, 'index']);
+    Route::patch('/owner/service-calls/{id}/status', [OwnerTableServiceCallController::class, 'updateStatus']);
+    Route::delete('/owner/service-calls/clear-completed', [OwnerTableServiceCallController::class, 'clearCompleted']);
+
+    // Customer Reviews & Feedback
+    Route::get('/owner/feedbacks', [OwnerFeedbackController::class, 'index']);
 
     // Dynamic Tables Management
     Route::get('/owner/tables', [TableController::class, 'index']);

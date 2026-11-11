@@ -393,6 +393,115 @@
         </div>
       </div>
 
+      <!-- WhatsApp Digital Bill & Split Bill Actions Row -->
+      <div v-if="order.restaurant?.enable_whatsapp_bill || order.restaurant?.enable_split_bill" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- WhatsApp Share Bill Button -->
+        <button
+          v-if="order.restaurant?.enable_whatsapp_bill"
+          @click="shareBillOnWhatsApp"
+          class="py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span>Share Bill on WhatsApp</span>
+        </button>
+
+        <!-- Split Bill with Friends Button -->
+        <button
+          v-if="order.restaurant?.enable_split_bill"
+          @click="openSplitBillModal"
+          class="py-3 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <i class="fa-solid fa-users text-sm"></i>
+          <span>Split Bill with Friends</span>
+        </button>
+      </div>
+
+      <!-- Smart Google Reviews & Feedback Booster Card -->
+      <div
+        v-if="order.restaurant?.enable_google_reviews"
+        class="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-3"
+      >
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center text-sm font-black">
+            ⭐
+          </div>
+          <div>
+            <h4 class="font-black text-sm text-slate-900">How was your dining experience?</h4>
+            <p class="text-[11px] text-slate-500">Your rating helps us maintain top quality food & service</p>
+          </div>
+        </div>
+
+        <!-- Rating Submitted Thanks State -->
+        <div v-if="feedbackSubmitted" class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-1">
+          <div class="text-xl">🎉</div>
+          <div class="text-xs font-black text-emerald-900">{{ feedbackResponseMsg }}</div>
+          <a
+            v-if="feedbackRedirectUrl"
+            :href="feedbackRedirectUrl"
+            target="_blank"
+            class="inline-flex items-center gap-1.5 px-4 py-2 mt-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs rounded-xl shadow transition"
+          >
+            <i class="fa-brands fa-google"></i>
+            <span>Post on Google Maps ⭐⭐⭐⭐⭐</span>
+          </a>
+        </div>
+
+        <!-- Rating Star Selector -->
+        <div v-else class="space-y-3 pt-1">
+          <div class="flex justify-center items-center gap-2 py-2">
+            <button
+              v-for="star in 5"
+              :key="star"
+              type="button"
+              @click="selectedRating = star"
+              class="text-3xl sm:text-4xl transition transform hover:scale-125 active:scale-95 cursor-pointer focus:outline-none"
+              :class="star <= selectedRating ? 'text-amber-400 drop-shadow' : 'text-slate-200'"
+            >
+              ★
+            </button>
+          </div>
+
+          <!-- If rated 4 or 5 stars (Booster redirect prompt) -->
+          <div v-if="selectedRating >= 4" class="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-2">
+            <p class="text-xs font-bold text-amber-900">
+              You rated us {{ selectedRating }} Stars! We're thrilled you loved your meal! ❤️
+            </p>
+            <p class="text-[11px] text-amber-700">
+              A quick review on Google Maps helps others discover our kitchen!
+            </p>
+            <button
+              @click="submitFeedback"
+              :disabled="submittingFeedback"
+              class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <i v-if="submittingFeedback" class="fa-solid fa-circle-notch fa-spin"></i>
+              <span v-else>Submit & Share on Google Maps ⭐</span>
+            </button>
+          </div>
+
+          <!-- If rated 1 to 3 stars (Private manager feedback protection) -->
+          <div v-else-if="selectedRating > 0" class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+            <p class="text-xs font-bold text-slate-800">
+              We're sorry we fell short! Please tell our manager what went wrong:
+            </p>
+            <textarea
+              v-model="feedbackComment"
+              rows="2"
+              placeholder="Tell us about the taste, service, or cleanliness..."
+              class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            ></textarea>
+            <button
+              @click="submitFeedback"
+              :disabled="submittingFeedback"
+              class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <i v-if="submittingFeedback" class="fa-solid fa-circle-notch fa-spin"></i>
+              <span v-else>Submit Private Feedback to Manager</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Action Navigation Buttons -->
       <div class="flex gap-3">
         <router-link
@@ -708,6 +817,93 @@
         </div>
       </div>
     </div>
+
+    <!-- Split Bill with Friends Modal -->
+    <div
+      v-if="showSplitBillModal"
+      class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      @click.self="showSplitBillModal = false"
+    >
+      <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl text-slate-900 border border-slate-200">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-2xl bg-cyan-500/20 text-cyan-600 flex items-center justify-center text-base border border-cyan-500/30">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-sm text-slate-900">Split Bill with Friends</h3>
+              <p class="text-[11px] text-slate-500">Total Bill: <strong>{{ order.restaurant?.currency }}{{ order.total_amount }}</strong></p>
+            </div>
+          </div>
+          <button
+            @click="showSplitBillModal = false"
+            class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+          >
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Split Count Selector -->
+          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+            <span class="text-xs font-semibold text-slate-600 block mb-2">Split between how many people?</span>
+            <div class="flex items-center justify-center gap-4">
+              <button
+                @click="splitCount = Math.max(2, splitCount - 1); generateSplitQr();"
+                class="w-10 h-10 rounded-xl bg-white border border-slate-300 text-slate-700 font-black text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 cursor-pointer"
+              >
+                -
+              </button>
+              <div class="text-center min-w-[80px]">
+                <span class="text-3xl font-black text-slate-900 font-mono">{{ splitCount }}</span>
+                <span class="text-[10px] text-slate-500 block uppercase font-bold">Diners</span>
+              </div>
+              <button
+                @click="splitCount = Math.min(10, splitCount + 1); generateSplitQr();"
+                class="w-10 h-10 rounded-xl bg-white border border-slate-300 text-slate-700 font-black text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 cursor-pointer"
+              >
+                +
+              </button>
+            </div>
+
+            <!-- Per Person Amount Highlight -->
+            <div class="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">Each Person Pays:</span>
+              <span class="text-xl font-black text-cyan-600 font-mono">
+                {{ order.restaurant?.currency }}{{ perPersonAmount }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Split UPI QR Code -->
+          <div v-if="splitQrDataUrl" class="bg-slate-900 text-white p-4 rounded-2xl text-center space-y-2">
+            <span class="text-[11px] font-bold text-slate-300 block">
+              Scan to Pay Exact Share ({{ order.restaurant?.currency }}{{ perPersonAmount }})
+            </span>
+            <div class="w-40 h-40 bg-white p-2 rounded-2xl mx-auto shadow flex items-center justify-center">
+              <img :src="splitQrDataUrl" class="w-full h-full object-contain" />
+            </div>
+            <div v-if="splitUpiString" class="pt-1">
+              <a
+                :href="splitUpiString"
+                class="inline-flex items-center gap-1.5 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs rounded-xl shadow transition"
+              >
+                <i class="fa-solid fa-mobile-screen"></i> Pay {{ order.restaurant?.currency }}{{ perPersonAmount }} via UPI
+              </a>
+            </div>
+          </div>
+
+          <!-- Share on WhatsApp with Friends -->
+          <button
+            @click="shareSplitOnWhatsApp"
+            class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <i class="fa-brands fa-whatsapp text-base"></i>
+            <span>Share {{ order.restaurant?.currency }}{{ perPersonAmount }} Share with Friends</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -746,6 +942,125 @@ const showToast = (toastObj) => {
   toastTimer = setTimeout(() => {
     customerToast.value = null;
   }, 7000);
+};
+
+// --- WhatsApp Digital Bill Sharing ---
+const shareBillOnWhatsApp = () => {
+  if (!order.value) return;
+  const o = order.value;
+  const r = o.restaurant || {};
+  const currency = r.currency || '₹';
+  const tableOrType = o.table_number || (o.order_type === 'delivery' ? 'Home Delivery' : 'Takeaway');
+
+  let itemLines = '';
+  if (o.items && o.items.length > 0) {
+    itemLines = o.items.map(i => `• ${i.quantity}x ${i.item_name} - ${currency}${i.subtotal}`).join('\n');
+  }
+
+  const message = `🧾 *Digital Receipt from ${r.name || 'Restaurant'}*
+--------------------------------
+*Order Code:* #${o.order_code}
+*Date:* ${new Date(o.created_at).toLocaleDateString()}
+*Table / Type:* ${tableOrType}
+*Customer:* ${o.customer_name || 'Guest'}
+--------------------------------
+${itemLines}
+--------------------------------
+*Subtotal:* ${currency}${o.subtotal}
+${o.discount_amount > 0 ? `*Discount:* -${currency}${o.discount_amount}\n` : ''}*Taxes:* ${currency}${o.tax_amount}
+*GRAND TOTAL:* ${currency}${o.total_amount}
+*Payment Status:* ${o.payment_status?.toUpperCase()} (${o.payment_method?.toUpperCase()})
+--------------------------------
+Track order live: ${window.location.href}
+Thank you for dining with us! 🙏`;
+
+  const encoded = encodeURIComponent(message);
+  window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+};
+
+// --- Split Bill with Friends ---
+const showSplitBillModal = ref(false);
+const splitCount = ref(2);
+const splitQrDataUrl = ref('');
+
+const perPersonAmount = computed(() => {
+  if (!order.value || !order.value.total_amount) return '0.00';
+  return (order.value.total_amount / splitCount.value).toFixed(2);
+});
+
+const splitUpiString = computed(() => {
+  if (!order.value?.restaurant?.upi_id) return null;
+  const upiId = order.value.restaurant.upi_id;
+  const payee = encodeURIComponent(order.value.restaurant.upi_name || order.value.restaurant.name);
+  const note = encodeURIComponent(`Split #${order.value.order_code} (${splitCount.value} ways)`);
+  return `upi://pay?pa=${upiId}&pn=${payee}&am=${perPersonAmount.value}&cu=INR&tn=${note}`;
+});
+
+const generateSplitQr = async () => {
+  if (!splitUpiString.value) return;
+  try {
+    splitQrDataUrl.value = await QRCode.toDataURL(splitUpiString.value, {
+      width: 220,
+      margin: 1,
+      color: { dark: '#0f172a', light: '#ffffff' }
+    });
+  } catch (err) {
+    console.error('Failed to generate split QR', err);
+  }
+};
+
+const openSplitBillModal = () => {
+  showSplitBillModal.value = true;
+  generateSplitQr();
+};
+
+const shareSplitOnWhatsApp = () => {
+  if (!order.value) return;
+  const currency = order.value.restaurant?.currency || '₹';
+  const text = `Hey friends! 🍽️
+Our total bill at *${order.value.restaurant?.name || 'Restaurant'}* is *${currency}${order.value.total_amount}*.
+Splitting equally between *${splitCount.value} people*:
+👉 *Each person's share: ${currency}${perPersonAmount.value}*
+
+Pay directly via UPI or view live bill:
+${window.location.href}`;
+
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+};
+
+// --- Smart Google Reviews & Feedback Booster ---
+const selectedRating = ref(5);
+const feedbackComment = ref('');
+const submittingFeedback = ref(false);
+const feedbackSubmitted = ref(false);
+const feedbackResponseMsg = ref('');
+const feedbackRedirectUrl = ref('');
+
+const submitFeedback = async () => {
+  if (!order.value) return;
+  submittingFeedback.value = true;
+  try {
+    const res = await axios.post(`/r/${order.value.restaurant?.slug}/feedback`, {
+      rating: selectedRating.value,
+      comment: feedbackComment.value,
+      order_code: order.value.order_code,
+      customer_name: order.value.customer_name,
+      customer_phone: order.value.customer_phone,
+    });
+    if (res.data.success) {
+      feedbackSubmitted.value = true;
+      feedbackResponseMsg.value = res.data.message;
+      feedbackRedirectUrl.value = res.data.google_review_url || '';
+
+      if (res.data.redirect_to_google && res.data.google_review_url) {
+        window.open(res.data.google_review_url, '_blank');
+      }
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to submit feedback');
+  } finally {
+    submittingFeedback.value = false;
+  }
 };
 
 // --- 2-Game Tournament State ---

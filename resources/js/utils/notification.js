@@ -27,6 +27,21 @@ export const playSound = (type = 'chime') => {
       osc.start(now);
       osc.stop(now + 0.6);
 
+    } else if (type === 'service_bell') {
+      // Distinct High-Pitch Service Bell Ping (1760Hz - A6)
+      [0, 0.18, 0.36].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1760, now + delay);
+        gain.gain.setValueAtTime(0.3, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.4);
+      });
+
     } else if (type === 'payment_success') {
       // Celebratory C-Major 4-Chord Arpeggio (C5 - E5 - G5 - C6)
       const freqs = [523.25, 659.25, 783.99, 1046.50];

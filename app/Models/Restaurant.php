@@ -43,6 +43,13 @@ class Restaurant extends Model
         'loyalty_required_visits',
         'loyalty_game_type',
         'loyalty_rewards',
+        'enable_waiter_call',
+        'enable_google_reviews',
+        'google_review_url',
+        'enable_whatsapp_bill',
+        'enable_split_bill',
+        'enable_voice_search',
+        'enable_kds',
         'is_active',
     ];
 
@@ -57,6 +64,12 @@ class Restaurant extends Model
             'loyalty_enabled' => 'boolean',
             'loyalty_required_visits' => 'integer',
             'loyalty_rewards' => 'array',
+            'enable_waiter_call' => 'boolean',
+            'enable_google_reviews' => 'boolean',
+            'enable_whatsapp_bill' => 'boolean',
+            'enable_split_bill' => 'boolean',
+            'enable_voice_search' => 'boolean',
+            'enable_kds' => 'boolean',
             'latitude' => 'float',
             'longitude' => 'float',
             'geofence_radius_km' => 'float',
@@ -90,6 +103,16 @@ class Restaurant extends Model
     public function tables(): HasMany
     {
         return $this->hasMany(RestaurantTable::class)->orderBy('name');
+    }
+
+    public function serviceCalls(): HasMany
+    {
+        return $this->hasMany(TableServiceCall::class)->latest();
+    }
+
+    public function customerFeedbacks(): HasMany
+    {
+        return $this->hasMany(CustomerFeedback::class)->latest();
     }
 
     public function getEffectiveLoyaltyRewards(): array

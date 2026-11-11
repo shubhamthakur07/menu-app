@@ -78,6 +78,13 @@ class RestaurantController extends Controller
             'enable_home_delivery' => 'boolean',
             'enable_takeaway' => 'boolean',
             'allow_shared_table_orders' => 'boolean',
+            'enable_waiter_call' => 'boolean',
+            'enable_google_reviews' => 'boolean',
+            'google_review_url' => 'nullable|url|max:255',
+            'enable_whatsapp_bill' => 'boolean',
+            'enable_split_bill' => 'boolean',
+            'enable_voice_search' => 'boolean',
+            'enable_kds' => 'boolean',
             'is_active' => 'boolean',
         ]);
 
