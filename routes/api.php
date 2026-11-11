@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\UploadController;
 use App\Http\Controllers\Owner\CategoryController;
 use App\Http\Controllers\Owner\MenuItemController;
+use App\Http\Controllers\Owner\MenuScanController;
 use App\Http\Controllers\Owner\OwnerOrderController;
-use App\Http\Controllers\Owner\TableController;
 use App\Http\Controllers\Owner\RestaurantController;
+use App\Http\Controllers\Owner\TableController;
 use App\Http\Controllers\PublicMenuController;
+use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', fn () => response()->json(['status' => 'ok', 'time' => time()]));
@@ -60,6 +61,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/owner/menu-items/{id}', [MenuItemController::class, 'update']);
     Route::patch('/owner/menu-items/{id}/toggle-availability', [MenuItemController::class, 'toggleAvailability']);
     Route::delete('/owner/menu-items/{id}', [MenuItemController::class, 'destroy']);
+
+    // AI Photo-to-Menu Scanner
+    Route::post('/owner/menu/scan-image', [MenuScanController::class, 'scan']);
+    Route::post('/owner/menu/import-scanned', [MenuScanController::class, 'import']);
 
     // Orders Management
     Route::get('/owner/orders', [OwnerOrderController::class, 'index']);

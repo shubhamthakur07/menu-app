@@ -195,6 +195,13 @@
             </div>
             <div class="flex items-center gap-3 shrink-0 flex-wrap">
               <button
+                @click="openScanMenuModal"
+                class="px-4 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-900/40 transition flex items-center gap-2 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+                title="Scan photo of physical menu to automatically create dishes with AI"
+              >
+                <i class="fa-solid fa-camera"></i> Scan Menu Photo (AI)
+              </button>
+              <button
                 @click="openPdfModal"
                 class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-rose-300 hover:text-white border border-rose-500/30 font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer"
                 title="Export complete restaurant menu card as PDF"
@@ -496,6 +503,16 @@
 
             <div class="flex items-center gap-2.5 flex-wrap">
               <button
+                @click="openScanMenuModal"
+                class="px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-bold rounded-xl text-xs shadow-lg shadow-purple-900/40 transition flex items-center gap-2 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+                title="Scan photo of physical menu or rate card to automatically create dishes with AI"
+              >
+                <i class="fa-solid fa-camera text-sm"></i>
+                <span>Scan Menu Photo</span>
+                <span class="bg-amber-400 text-slate-950 text-[9px] px-1.5 py-0.5 rounded-full font-black tracking-wider">AI</span>
+              </button>
+
+              <button
                 @click="openPdfModal"
                 class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-rose-300 hover:text-white border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow"
                 :title="restaurant?.business_type === 'salon' ? 'Download or Print complete Salon Rate Card as PDF' : 'Download or Print complete Restaurant Menu as PDF'"
@@ -581,6 +598,37 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Empty Dishes State -->
+          <div
+            v-if="menuItems.length === 0"
+            class="bg-slate-800/60 border-2 border-dashed border-slate-700/80 rounded-3xl p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4 my-6"
+          >
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-amber-500/20 border border-purple-500/30 flex items-center justify-center mx-auto text-2xl text-amber-400 shadow-inner">
+              <i class="fa-solid fa-camera-retro"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">No dishes in your menu yet</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                Take a photo or upload an image of your printed menu card, and AI will automatically create all categories, dishes and prices for you in seconds!
+              </p>
+            </div>
+            <div class="flex items-center justify-center gap-3 pt-2 flex-wrap">
+              <button
+                @click="openScanMenuModal"
+                class="px-5 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-bold rounded-xl text-xs shadow-lg shadow-purple-900/40 transition flex items-center gap-2 cursor-pointer transform hover:scale-[1.02]"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Scan Menu Photo (AI)</span>
+              </button>
+              <button
+                @click="openDishModal(null)"
+                class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+              >
+                <i class="fa-solid fa-plus"></i> Add Manually
+              </button>
             </div>
           </div>
         </div>
@@ -1780,6 +1828,385 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal: AI Menu Photo Scanner -->
+    <div
+      v-if="showScanMenuModal"
+      class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      @click.self="showScanMenuModal = false"
+    >
+      <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-white">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-purple-900/40">
+              <i class="fa-solid fa-wand-magic-sparkles text-lg animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-extrabold text-sm sm:text-base text-white">AI Menu Photo Scanner</h3>
+                <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                  Vision AI
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">Photo kheenche ya upload karein — AI dishes & categories create kar dega</p>
+            </div>
+          </div>
+
+          <button
+            @click="showScanMenuModal = false"
+            class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Body Area -->
+        <div class="p-6 overflow-y-auto flex-1 space-y-6">
+          <!-- STEP 1: Upload / Take Photo -->
+          <div v-if="scanStep === 1" class="space-y-5">
+            <!-- Hidden File Inputs -->
+            <input
+              ref="cameraInputRef"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              class="hidden"
+              @change="onPhotoSelected"
+            />
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onPhotoSelected"
+            />
+
+            <!-- Drag & Drop / Selection Area (When no photo chosen yet) -->
+            <div
+              v-if="!photoPreviewUrl"
+              class="border-2 border-dashed border-slate-700 hover:border-purple-500/60 rounded-3xl p-6 sm:p-10 text-center bg-slate-950/40 transition flex flex-col items-center justify-center"
+            >
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-amber-500/20 border border-purple-500/30 flex items-center justify-center text-2xl text-purple-300 mb-4 shadow">
+                <i class="fa-solid fa-camera"></i>
+              </div>
+
+              <h4 class="text-base font-bold text-white mb-1">
+                Printed Menu Card Ki Photo Lein ya Upload Karein
+              </h4>
+              <p class="text-xs text-slate-400 max-w-md mx-auto mb-6">
+                Restaurant ke printed menu, chalkboard, pamphlets ya salon rate-card ki clear photo upload karein.
+              </p>
+
+              <!-- Two Big Buttons: Live Camera & Gallery -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md">
+                <button
+                  type="button"
+                  @click="triggerCamera"
+                  class="py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-2xl text-xs shadow-lg transition flex items-center justify-center gap-2 cursor-pointer transform hover:scale-[1.02]"
+                >
+                  <i class="fa-solid fa-camera text-base"></i>
+                  <span>Take Live Photo (Camera)</span>
+                </button>
+
+                <button
+                  type="button"
+                  @click="triggerGallery"
+                  class="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl text-xs border border-slate-700 transition flex items-center justify-center gap-2 cursor-pointer transform hover:scale-[1.02]"
+                >
+                  <i class="fa-solid fa-image text-base text-amber-400"></i>
+                  <span>Choose from Gallery / Files</span>
+                </button>
+              </div>
+
+              <div class="mt-6 flex items-center gap-2 text-xs text-slate-500">
+                <span>Or test without camera:</span>
+                <button
+                  type="button"
+                  @click="startScan(true)"
+                  class="text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                >
+                  ⚡ Try Instant Demo Scan
+                </button>
+              </div>
+            </div>
+
+            <!-- When a Photo is Selected (Preview & Action) -->
+            <div v-else class="space-y-4">
+              <div class="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-700 max-h-80 flex items-center justify-center">
+                <img :src="photoPreviewUrl" class="w-full max-h-80 object-contain" />
+                <button
+                  @click="removeSelectedPhoto"
+                  class="absolute top-3 right-3 px-3 py-1.5 bg-slate-900/80 hover:bg-rose-900/80 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 backdrop-blur-md cursor-pointer"
+                >
+                  <i class="fa-solid fa-trash-can"></i> Remove / Re-take
+                </button>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  @click="startScan(false)"
+                  class="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-bold rounded-2xl text-sm shadow-xl shadow-purple-900/40 transition flex items-center justify-center gap-2 cursor-pointer transform hover:scale-[1.01]"
+                >
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Scan Menu with AI Vision Now</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Error Banner (if any) -->
+            <div
+              v-if="scanErrorMessage"
+              class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-3"
+            >
+              <i class="fa-solid fa-triangle-exclamation text-rose-400 mt-0.5 text-base"></i>
+              <div class="flex-1 space-y-1">
+                <div class="font-bold text-rose-200">Scan Notice</div>
+                <div>{{ scanErrorMessage }}</div>
+                <div class="text-[11px] text-rose-300/80">
+                  Tip: Make sure you enter a valid free Gemini API Key below, or click "Try Instant Demo Scan" above.
+                </div>
+              </div>
+            </div>
+
+            <!-- Collapsible AI API Key / Provider Settings -->
+            <div class="bg-slate-950/60 rounded-2xl border border-slate-800 p-4">
+              <button
+                type="button"
+                @click="showApiKeyConfig = !showApiKeyConfig"
+                class="w-full flex items-center justify-between text-xs font-bold text-slate-300 hover:text-white cursor-pointer"
+              >
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-key text-amber-400"></i>
+                  <span>AI Engine API Key Settings</span>
+                  <span v-if="scanApiKey" class="text-[10px] text-emerald-400 font-normal">● Saved</span>
+                </div>
+                <i :class="showApiKeyConfig ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs text-slate-500"></i>
+              </button>
+
+              <div v-if="showApiKeyConfig" class="mt-3 pt-3 border-t border-slate-800 space-y-2">
+                <label class="block text-[11px] font-semibold text-slate-400">
+                  Google Gemini API Key (100% Free)
+                </label>
+                <div class="flex gap-2">
+                  <input
+                    v-model="scanApiKey"
+                    type="password"
+                    placeholder="AIzaSy..."
+                    @change="saveApiKeySetting"
+                    class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    type="button"
+                    @click="saveApiKeySetting"
+                    class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold"
+                  >
+                    Save
+                  </button>
+                </div>
+                <div class="text-[10px] text-slate-400 flex items-center justify-between">
+                  <span>Saved locally in your browser.</span>
+                  <a
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    class="text-amber-400 hover:underline font-bold"
+                  >
+                    Get Free Gemini Key in 10 sec ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: Scanning / Processing Animation -->
+          <div v-else-if="scanStep === 2" class="py-12 flex flex-col items-center justify-center text-center space-y-6">
+            <!-- Radar Scanner Visual -->
+            <div class="relative w-36 h-36 rounded-3xl bg-slate-950 border-2 border-purple-500/40 flex items-center justify-center overflow-hidden shadow-2xl">
+              <img
+                v-if="photoPreviewUrl"
+                :src="photoPreviewUrl"
+                class="absolute inset-0 w-full h-full object-cover opacity-30 filter blur-xs"
+              />
+              <div class="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_15px_#f59e0b] animate-bounce"></div>
+              <div class="w-16 h-16 rounded-2xl bg-purple-600/30 border border-purple-400/40 flex items-center justify-center text-white text-2xl z-10 animate-pulse">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <h4 class="text-base font-extrabold text-white flex items-center justify-center gap-2">
+                <span>AI Vision Scanning Menu...</span>
+                <i class="fa-solid fa-circle-notch fa-spin text-amber-400 text-sm"></i>
+              </h4>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                Dishes, categories, veg/non-veg status, and prices are being detected...
+              </p>
+            </div>
+
+            <!-- Stepper indicators -->
+            <div class="flex items-center gap-3 text-[11px] text-slate-400">
+              <span class="flex items-center gap-1 text-emerald-400 font-semibold"><i class="fa-solid fa-check"></i> Image Uploaded</span>
+              <span class="text-slate-600">•</span>
+              <span class="flex items-center gap-1 text-amber-400 font-semibold animate-pulse"><i class="fa-solid fa-spinner fa-spin"></i> Reading OCR & Dishes</span>
+              <span class="text-slate-600">•</span>
+              <span class="text-slate-500">Formatting Menu</span>
+            </div>
+          </div>
+
+          <!-- STEP 3: Review & Edit Extracted Menu Before Import -->
+          <div v-else-if="scanStep === 3" class="space-y-6">
+            <!-- Review Top Bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
+              <div>
+                <div class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                  <i class="fa-solid fa-circle-check"></i> Menu Recognition Complete!
+                </div>
+                <div class="text-sm font-extrabold text-white mt-0.5">
+                  Found {{ totalDetectedItems }} dishes in {{ detectedCategories.length }} categories
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  @click="toggleSelectAll"
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                >
+                  {{ isAllSelected ? 'Deselect All' : 'Select All' }}
+                </button>
+
+                <button
+                  type="button"
+                  @click="scanStep = 1"
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs transition cursor-pointer"
+                >
+                  <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Scan Another
+                </button>
+              </div>
+            </div>
+
+            <!-- Categories & Items Groups -->
+            <div class="space-y-4">
+              <div
+                v-for="(cat, catIndex) in detectedCategories"
+                :key="catIndex"
+                class="bg-slate-950/40 rounded-2xl border border-slate-800 p-4 space-y-3"
+              >
+                <!-- Category Name Header -->
+                <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <div class="flex items-center gap-2 flex-1 max-w-sm">
+                    <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-xs">
+                      <i :class="cat.icon || 'fa-solid fa-utensils'"></i>
+                    </span>
+                    <input
+                      v-model="cat.name"
+                      type="text"
+                      placeholder="Category Name"
+                      class="px-2.5 py-1 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white focus:outline-none focus:border-amber-500 flex-1"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    @click="addDetectedItem(catIndex)"
+                    class="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <i class="fa-solid fa-plus"></i> Add Item
+                  </button>
+                </div>
+
+                <!-- Items in this Category -->
+                <div class="space-y-2">
+                  <div
+                    v-for="(item, itemIndex) in cat.items"
+                    :key="itemIndex"
+                    class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center gap-2.5 hover:border-slate-700 transition"
+                  >
+                    <!-- Checkbox -->
+                    <input
+                      type="checkbox"
+                      v-model="item.selected"
+                      class="w-4 h-4 rounded text-amber-500 focus:ring-0 focus:outline-none bg-slate-800 border-slate-700 cursor-pointer"
+                    />
+
+                    <!-- Dish Name Input -->
+                    <input
+                      type="text"
+                      v-model="item.name"
+                      placeholder="Dish / Service Name"
+                      class="flex-1 min-w-[120px] px-2.5 py-1.5 bg-slate-950 border border-slate-700/80 rounded-lg text-xs text-white focus:outline-none focus:border-amber-500"
+                    />
+
+                    <!-- Price Input -->
+                    <div class="flex items-center bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-1 shrink-0 w-24">
+                      <span class="text-xs text-amber-400 font-bold mr-1">{{ restaurant?.currency }}</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        v-model.number="item.price"
+                        class="w-full bg-transparent text-xs text-white font-bold focus:outline-none"
+                      />
+                    </div>
+
+                    <!-- Veg / Non-Veg Toggle (for restaurant) -->
+                    <button
+                      v-if="restaurant?.business_type !== 'salon' && restaurant?.business_type !== 'retail'"
+                      type="button"
+                      @click="toggleItemFoodType(item)"
+                      :class="[
+                        'px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition border shrink-0 cursor-pointer',
+                        item.food_type === 'veg'
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                          : (item.food_type === 'non-veg'
+                            ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                            : 'bg-slate-800 text-slate-400 border-slate-700')
+                      ]"
+                      title="Click to toggle: Veg -> Non-Veg -> None"
+                    >
+                      {{ item.food_type || 'General' }}
+                    </button>
+
+                    <!-- Remove Item Button -->
+                    <button
+                      type="button"
+                      @click="removeDetectedItem(catIndex, itemIndex)"
+                      class="w-7 h-7 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 flex items-center justify-center transition cursor-pointer"
+                      title="Delete this item"
+                    >
+                      <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer / Action Bar -->
+        <div class="px-6 py-4 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            @click="showScanMenuModal = false"
+            class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer"
+          >
+            Close
+          </button>
+
+          <button
+            v-if="scanStep === 3"
+            type="button"
+            :disabled="isImporting || selectedDetectedCount === 0"
+            @click="confirmImportScannedMenu"
+            class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-emerald-900/30 transition flex items-center gap-2 cursor-pointer"
+          >
+            <i v-if="isImporting" class="fa-solid fa-circle-notch fa-spin"></i>
+            <i v-else class="fa-solid fa-check-double"></i>
+            <span>Confirm & Create {{ selectedDetectedCount }} Menu Dishes</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1887,6 +2314,228 @@ const downloadPdf = async () => {
 
 const printMenu = () => {
   window.print();
+};
+
+// ==========================================
+// AI Menu Photo Scanner State & Methods
+// ==========================================
+const showScanMenuModal = ref(false);
+const scanStep = ref(1); // 1 = upload/capture, 2 = scanning, 3 = review/edit
+const selectedPhotoFile = ref(null);
+const photoPreviewUrl = ref('');
+const scanApiKey = ref(localStorage.getItem('gemini_api_key') || '');
+const showApiKeyConfig = ref(false);
+const isScanning = ref(false);
+const isImporting = ref(false);
+const scanErrorMessage = ref('');
+const detectedCategories = ref([]);
+const cameraInputRef = ref(null);
+const fileInputRef = ref(null);
+
+const openScanMenuModal = () => {
+  showScanMenuModal.value = true;
+  scanStep.value = 1;
+  selectedPhotoFile.value = null;
+  photoPreviewUrl.value = '';
+  scanErrorMessage.value = '';
+  detectedCategories.value = [];
+};
+
+const triggerCamera = () => {
+  if (cameraInputRef.value) {
+    cameraInputRef.value.click();
+  }
+};
+
+const triggerGallery = () => {
+  if (fileInputRef.value) {
+    fileInputRef.value.click();
+  }
+};
+
+const onPhotoSelected = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  selectedPhotoFile.value = file;
+  scanErrorMessage.value = '';
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    photoPreviewUrl.value = event.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+const removeSelectedPhoto = () => {
+  selectedPhotoFile.value = null;
+  photoPreviewUrl.value = '';
+  if (cameraInputRef.value) cameraInputRef.value.value = '';
+  if (fileInputRef.value) fileInputRef.value.value = '';
+};
+
+const saveApiKeySetting = () => {
+  if (scanApiKey.value) {
+    localStorage.setItem('gemini_api_key', scanApiKey.value.trim());
+  } else {
+    localStorage.removeItem('gemini_api_key');
+  }
+};
+
+const totalDetectedItems = computed(() => {
+  return detectedCategories.value.reduce((total, cat) => total + (cat.items?.length || 0), 0);
+});
+
+const selectedDetectedCount = computed(() => {
+  return detectedCategories.value.reduce((total, cat) => {
+    return total + (cat.items?.filter(i => i.selected)?.length || 0);
+  }, 0);
+});
+
+const isAllSelected = computed(() => {
+  return totalDetectedItems.value > 0 && selectedDetectedCount.value === totalDetectedItems.value;
+});
+
+const toggleSelectAll = () => {
+  const targetState = !isAllSelected.value;
+  detectedCategories.value.forEach(cat => {
+    cat.items?.forEach(item => {
+      item.selected = targetState;
+    });
+  });
+};
+
+const toggleItemFoodType = (item) => {
+  if (restaurant.value?.business_type === 'salon' || restaurant.value?.business_type === 'retail') {
+    return;
+  }
+  if (item.food_type === 'veg') {
+    item.food_type = 'non-veg';
+  } else if (item.food_type === 'non-veg') {
+    item.food_type = null;
+  } else {
+    item.food_type = 'veg';
+  }
+};
+
+const removeDetectedItem = (catIndex, itemIndex) => {
+  detectedCategories.value[catIndex].items.splice(itemIndex, 1);
+  if (detectedCategories.value[catIndex].items.length === 0) {
+    detectedCategories.value.splice(catIndex, 1);
+  }
+};
+
+const addDetectedItem = (catIndex) => {
+  detectedCategories.value[catIndex].items.push({
+    name: 'New Dish',
+    price: 100,
+    food_type: restaurant.value?.business_type === 'salon' ? null : 'veg',
+    description: '',
+    duration_minutes: restaurant.value?.business_type === 'salon' ? 30 : null,
+    selected: true,
+  });
+};
+
+const startScan = async (isDemo = false) => {
+  scanErrorMessage.value = '';
+  isScanning.value = true;
+  scanStep.value = 2;
+
+  try {
+    saveApiKeySetting();
+
+    const formData = new FormData();
+    if (isDemo) {
+      formData.append('demo', '1');
+    } else {
+      if (!selectedPhotoFile.value) {
+        throw new Error('Please select or capture a photo first.');
+      }
+      formData.append('image', selectedPhotoFile.value);
+      if (scanApiKey.value) {
+        formData.append('api_key', scanApiKey.value.trim());
+      }
+      formData.append('provider', 'gemini');
+    }
+
+    const res = await axios.post('/owner/menu/scan-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    if (res.data.success && res.data.categories?.length) {
+      detectedCategories.value = res.data.categories.map(cat => ({
+        name: cat.name || 'Dishes',
+        icon: cat.icon || 'fa-solid fa-utensils',
+        description: cat.description || '',
+        items: (cat.items || []).map(item => ({
+          name: item.name,
+          price: item.price,
+          food_type: item.food_type,
+          description: item.description || '',
+          duration_minutes: item.duration_minutes || 30,
+          selected: true,
+        })),
+      }));
+      scanStep.value = 3;
+    } else {
+      throw new Error(res.data.message || 'No dishes could be found in the image.');
+    }
+  } catch (err) {
+    scanStep.value = 1;
+    const msg = err.response?.data?.message || err.message || 'Failed to scan image. Please try again.';
+    scanErrorMessage.value = msg;
+    if (err.response?.data?.needs_key) {
+      showApiKeyConfig.value = true;
+    }
+  } finally {
+    isScanning.value = false;
+  }
+};
+
+const confirmImportScannedMenu = async () => {
+  if (selectedDetectedCount.value === 0) {
+    alert('Please select at least 1 item to import.');
+    return;
+  }
+
+  isImporting.value = true;
+  try {
+    // Filter to only categories with selected items
+    const payloadCategories = detectedCategories.value
+      .map(cat => ({
+        name: cat.name,
+        icon: cat.icon,
+        description: cat.description,
+        items: cat.items.filter(item => item.selected),
+      }))
+      .filter(cat => cat.items.length > 0);
+
+    const res = await axios.post('/owner/menu/import-scanned', {
+      categories: payloadCategories,
+    });
+
+    if (res.data.success) {
+      playSound('payment_success');
+      newOrderToast.value = {
+        type: 'payment',
+        title: 'Menu Imported Successfully!',
+        code: 'SCAN',
+        location: `${res.data.items_created} dishes created`,
+        amount: '',
+        customer: `${res.data.categories_created} new categories added to menu`,
+      };
+
+      await fetchCategories();
+      await fetchMenuItems();
+      showScanMenuModal.value = false;
+      activeTab.value = 'menu';
+    } else {
+      alert(res.data.message || 'Failed to import menu items.');
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to import menu items.');
+  } finally {
+    isImporting.value = false;
+  }
 };
 
 // Settings form
