@@ -99,11 +99,12 @@
         </div>
       </div>
 
-      <!-- Navigation Tabs with Horizontal Scroll Controls -->
+      <!-- Navigation Tabs with Horizontal Scroll Controls (Centered) -->
       <div class="relative w-full border-t border-slate-800/60 bg-slate-900/60">
-        <div class="max-w-full mx-auto px-2 sm:px-4 flex items-center gap-1.5 py-1">
-          <!-- Scroll Left Button -->
+        <div class="max-w-full mx-auto px-2 sm:px-4 flex items-center justify-center gap-1.5 py-1">
+          <!-- Scroll Left Button (Visible only when tabs overflow) -->
           <button
+            v-if="hasTabsOverflow"
             @click="scrollTabs('left')"
             class="shrink-0 w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition shadow-sm border border-slate-700/80 cursor-pointer"
             title="Scroll Left"
@@ -111,11 +112,14 @@
             <i class="fa-solid fa-chevron-left text-[10px]"></i>
           </button>
 
-          <!-- Tabs List Container -->
+          <!-- Tabs List Container (Centered when fits, scrollable when overflow) -->
           <div
             ref="tabsNavRef"
             @wheel.passive="handleTabsWheel"
-            class="flex-1 flex space-x-1 sm:space-x-1.5 overflow-x-auto py-1 scroll-smooth custom-tabs-scroll"
+            :class="[
+              'flex space-x-1 sm:space-x-1.5 overflow-x-auto py-1 scroll-smooth custom-tabs-scroll',
+              hasTabsOverflow ? 'flex-1 justify-start' : 'justify-center mx-auto'
+            ]"
           >
             <button
               v-for="tab in tabs"
@@ -140,8 +144,9 @@
             </button>
           </div>
 
-          <!-- Scroll Right Button -->
+          <!-- Scroll Right Button (Visible only when tabs overflow) -->
           <button
+            v-if="hasTabsOverflow"
             @click="scrollTabs('right')"
             class="shrink-0 w-7 h-7 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition shadow-sm border border-slate-700/80 cursor-pointer"
             title="Scroll Right"
@@ -3785,6 +3790,15 @@ const fetchFeedbacks = async () => {
 };
 
 const tabsNavRef = ref(null);
+const hasTabsOverflow = ref(false);
+
+const checkTabsOverflow = () => {
+  nextTick(() => {
+    if (tabsNavRef.value) {
+      hasTabsOverflow.value = tabsNavRef.value.scrollWidth > tabsNavRef.value.clientWidth + 6;
+    }
+  });
+};
 
 const scrollTabs = (direction) => {
   if (!tabsNavRef.value) return;
@@ -3812,6 +3826,10 @@ const selectTab = (tabId) => {
     }
   });
 };
+
+watch(tabs, () => {
+  checkTabsOverflow();
+});
 
 const tabs = computed(() => {
   const isSalon = restaurant.value?.business_type === 'salon';
@@ -4584,10 +4602,13 @@ onMounted(() => {
   } catch (e) {}
   fetchDashboardData();
   startAutoPoll();
+  checkTabsOverflow();
+  window.addEventListener('resize', checkTabsOverflow);
 });
 
 onUnmounted(() => {
   stopAutoPoll();
+  window.removeEventListener('resize', checkTabsOverflow);
 });
 </script>
 
