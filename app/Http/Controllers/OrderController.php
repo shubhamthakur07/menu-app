@@ -339,37 +339,15 @@ class OrderController extends Controller
 
         $loyaltyProgress = null;
         if ($order->restaurant && $order->restaurant->loyalty_enabled && $order->customer_phone) {
-            $cleanPhone = preg_replace('/[^0-9]/', '', $order->customer_phone);
-            if (! empty($cleanPhone)) {
-                $visitCount = Order::where('restaurant_id', $order->restaurant_id)
-                    ->where('order_status', '!=', 'cancelled')
-                    ->where(function ($q) use ($cleanPhone) {
-                        $q->whereRaw("REGEXP_REPLACE(customer_phone, '[^0-9]', '') = ?", [$cleanPhone]);
-                    })
-                    ->selectRaw('DATE(created_at) as visit_date')
-                    ->distinct()
-                    ->count('visit_date');
-
-                $required = $order->restaurant->loyalty_required_visits ?: 5;
-                $claimedRewards = Order::where('restaurant_id', $order->restaurant_id)
-                    ->where('loyalty_reward_claimed', true)
-                    ->where(function ($q) use ($cleanPhone) {
-                        $q->whereRaw("REGEXP_REPLACE(customer_phone, '[^0-9]', '') = ?", [$cleanPhone]);
-                    })
-                    ->count();
-
-                $earnedTickets = (int) floor($visitCount / $required);
-                $availableTickets = max(0, $earnedTickets - $claimedRewards);
-                $remainder = $visitCount % $required;
-                $visitsRemaining = $remainder === 0 ? ($availableTickets > 0 ? 0 : $required) : ($required - $remainder);
-
-                $loyaltyProgress = [
-                    'visit_count' => $visitCount,
-                    'required_visits' => $required,
-                    'available_tickets' => $availableTickets,
-                    'visits_remaining' => $visitsRemaining,
-                    'can_play' => $availableTickets > 0,
-                ];
+            try {
+                $required = (int) ($order->restaurant->loyalty_required_visits ?: 5);
+                $loyaltyProgress = LoyaltyProgramController::calculateCustomerLoyalty(
+                    $order->restaurant,
+                    $order->customer_phone,
+                    $required
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Loyalty progress lookup failed: '.$e->getMessage());
             }
         }
 

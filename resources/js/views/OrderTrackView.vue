@@ -28,11 +28,25 @@
 
     <div v-else-if="!order" class="max-w-md mx-auto bg-white p-8 rounded-3xl text-center shadow-lg">
       <i class="fa-solid fa-receipt text-5xl text-rose-500 mb-4"></i>
-      <h2 class="text-xl font-bold text-slate-800 mb-2">Order Not Found</h2>
-      <p class="text-xs text-slate-500 mb-6">We could not locate this order code.</p>
-      <router-link to="/" class="px-5 py-2.5 bg-amber-500 text-slate-900 font-bold rounded-xl text-xs">
-        Return Home
-      </router-link>
+      <h2 class="text-xl font-bold text-slate-800 mb-2">
+        {{ loadErrorCode === 404 ? 'Order Not Found' : 'Something Went Wrong' }}
+      </h2>
+      <p class="text-xs text-slate-500 mb-6">
+        {{ loadErrorCode === 404 ? 'We could not locate this order code.' : 'Unable to load order details right now. Please retry.' }}
+      </p>
+      <div class="flex items-center justify-center gap-3">
+        <button
+          v-if="loadErrorCode !== 404"
+          @click="fetchOrder"
+          class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs cursor-pointer flex items-center gap-1.5"
+        >
+          <i class="fa-solid fa-arrows-rotate"></i>
+          <span>Retry</span>
+        </button>
+        <router-link to="/" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs">
+          Return Home
+        </router-link>
+      </div>
     </div>
 
     <div v-else class="max-w-xl mx-auto space-y-6">
@@ -922,6 +936,7 @@ const loading = ref(true);
 const txnRef = ref('');
 const verifyingPayment = ref(false);
 const loyaltyProgress = ref(null);
+const loadErrorCode = ref(null);
 
 // Live Notifications & Alerts State
 const prevOrderStatus = ref(null);
@@ -1335,9 +1350,13 @@ const fetchOrder = async () => {
       if (upiString.value && order.value.payment_status !== 'paid') {
         renderQr();
       }
+      loadErrorCode.value = null;
+    } else {
+      loadErrorCode.value = 404;
     }
   } catch (err) {
     console.error('Failed to load order', err);
+    loadErrorCode.value = err.response?.status || 500;
   } finally {
     loading.value = false;
   }

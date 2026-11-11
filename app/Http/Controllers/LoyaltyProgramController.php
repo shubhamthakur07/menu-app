@@ -189,7 +189,7 @@ class LoyaltyProgramController extends Controller
      *
      * @return array{visit_count: int, available_tickets: int, can_play: bool, visits_remaining: int, current_cycle_visits: int, visit_dates: array, claimed_count: int}
      */
-    protected function calculateCustomerLoyalty(Restaurant $restaurant, string $phone, int $requiredVisits): array
+    public static function calculateCustomerLoyalty(Restaurant $restaurant, string $phone, int $requiredVisits): array
     {
         $driver = DB::connection()->getDriverName();
         $dateExpr = $driver === 'sqlite' ? "strftime('%Y-%m-%d', created_at)" : 'DATE(created_at)';
