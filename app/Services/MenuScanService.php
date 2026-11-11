@@ -116,13 +116,15 @@ class MenuScanService
                 $errorMessage = $errorData['error']['message'] ?? $response->body();
                 $lastErrorMessage = $errorMessage;
 
-                // If the model is not found or deprecated, try next candidate model
+                // If the model is not found, deprecated, or doesn't support image input, try next candidate model
                 if (
                     $response->status() === 404 ||
                     str_contains($errorMessage, 'is not found') ||
-                    str_contains($errorMessage, 'not supported for generateContent')
+                    str_contains($errorMessage, 'not supported for generateContent') ||
+                    str_contains($errorMessage, 'no longer available') ||
+                    str_contains($errorMessage, 'modality is not enabled')
                 ) {
-                    Log::info("Gemini model {$model} not available, trying next fallback model.");
+                    Log::info("Gemini model {$model} not suitable ({$errorMessage}), trying next fallback model.");
 
                     continue;
                 }
@@ -153,16 +155,18 @@ class MenuScanService
      */
     protected function getCandidateGeminiModels(string $apiKey): array
     {
-        $preferredList = [
+        $configured = config('services.gemini.model');
+        $preferredList = array_values(array_filter(array_unique([
+            $configured,
+            'gemini-3.8-flash',
+            'gemini-3.7-flash',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
+            'gemini-flash-latest',
+            'gemini-3-flash-preview',
             'gemini-2.5-flash',
             'gemini-2.0-flash',
-            'gemini-2.0-flash-exp',
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-flash',
-            'gemini-2.5-pro',
-            'gemini-2.0-pro',
-            'gemini-1.5-pro',
-        ];
+        ])));
 
         try {
             $listResponse = Http::timeout(8)->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
@@ -174,9 +178,20 @@ class MenuScanService
                     $methods = $m['supportedGenerationMethods'] ?? [];
                     if (in_array('generateContent', $methods, true)) {
                         $name = preg_replace('/^models\//', '', $m['name'] ?? '');
-                        if ($name) {
-                            $available[] = $name;
+
+                        // Filter out text-to-speech, image generation, audio transcription, or non-multimodal models
+                        if (
+                            empty($name) ||
+                            str_contains($name, 'tts') ||
+                            str_contains($name, 'transcribe') ||
+                            str_contains($name, 'embedding') ||
+                            str_contains($name, 'image') ||
+                            str_contains($name, 'banana')
+                        ) {
+                            continue;
                         }
+
+                        $available[] = $name;
                     }
                 }
 
