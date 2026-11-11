@@ -911,6 +911,294 @@
           </div>
         </div>
 
+        <!-- TAB: LOYALTY CUSTOMER REWARDS & SPINNER -->
+        <div v-if="activeTab === 'loyalty'" class="space-y-8">
+          <!-- Top Title & Stats Banner -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl font-bold text-white">Royalty Customer Rewards & Lucky Spinner</h2>
+                <span class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                  Gamified
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">
+                Customer har visit/order par 1 ticket/stamp earn karega. {{ loyaltyConfig.required_visits || 5 }} visits par Lucky Spinner Wheel ya Scratch Card unlock hoga!
+              </p>
+            </div>
+
+            <!-- Program Status Badge -->
+            <button
+              @click="toggleLoyaltyEnabled"
+              class="px-4 py-2 rounded-xl border text-xs font-bold transition flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+              :class="loyaltyConfig.enabled ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700'"
+            >
+              <i :class="loyaltyConfig.enabled ? 'fa-solid fa-circle-check text-emerald-400' : 'fa-solid fa-circle-xmark text-slate-500'"></i>
+              <span>{{ loyaltyConfig.enabled ? 'Loyalty Rewards: Active' : 'Loyalty Rewards: Paused' }}</span>
+            </button>
+          </div>
+
+          <!-- Loyalty Metric Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+              <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
+                <span>Loyalty Diners</span>
+                <i class="fa-solid fa-users text-amber-400 text-base"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-white">
+                {{ loyaltyCustomers.length }}
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">Unique repeat customers</div>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+              <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
+                <span>Rewards Unlocked & Claimed</span>
+                <i class="fa-solid fa-gift text-purple-400 text-base"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-purple-400">
+                {{ loyaltyStats.total_loyalty_claims || 0 }}
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">Total reward tickets used</div>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+              <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
+                <span>Total Reward Value Given</span>
+                <i class="fa-solid fa-tags text-emerald-400 text-base"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-emerald-400">
+                {{ restaurant?.currency }}{{ (loyaltyStats.total_loyalty_discount || 0).toFixed(2) }}
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1">Discounts to loyal customers</div>
+            </div>
+          </div>
+
+          <!-- Rules & Customizer Form -->
+          <div class="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-4">
+              <div>
+                <h3 class="font-extrabold text-sm text-white">Program Rules & Game Experience</h3>
+                <p class="text-xs text-slate-400">Customize how many visits unlock the reward ticket and choose the game style</p>
+              </div>
+              <button
+                @click="saveLoyaltySettings"
+                :disabled="savingLoyalty"
+                class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg transition flex items-center gap-2 cursor-pointer"
+              >
+                <i v-if="savingLoyalty" class="fa-solid fa-circle-notch fa-spin"></i>
+                <i v-else class="fa-solid fa-floppy-disk"></i>
+                <span>Save Loyalty Rules</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Required Visits Field -->
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-200">
+                  Target Distinct Visits to Unlock Reward Ticket *
+                </label>
+                <div class="flex items-center gap-3">
+                  <input
+                    v-model.number="loyaltyConfig.required_visits"
+                    type="number"
+                    min="1"
+                    max="50"
+                    class="w-32 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-none focus:border-amber-500"
+                  />
+                  <span class="text-xs text-slate-400">
+                    visits / orders (e.g. 5 means customer gets a lucky ticket on every 5th visit)
+                  </span>
+                </div>
+              </div>
+
+              <!-- Game Style Selector -->
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-200">
+                  Reward Unlocking Game Style *
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    @click="loyaltyConfig.game_type = 'spinner'"
+                    :class="[
+                      'p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer',
+                      loyaltyConfig.game_type === 'spinner' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    <i class="fa-solid fa-dharmachakra text-base"></i>
+                    <span>Lucky Spinner</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="loyaltyConfig.game_type = 'scratch'"
+                    :class="[
+                      'p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer',
+                      loyaltyConfig.game_type === 'scratch' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    <i class="fa-solid fa-ticket text-base"></i>
+                    <span>Scratch Card</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="loyaltyConfig.game_type = 'both'"
+                    :class="[
+                      'p-2.5 rounded-xl border text-xs font-bold transition flex flex-col items-center gap-1.5 cursor-pointer',
+                      loyaltyConfig.game_type === 'both' ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
+                    ]"
+                  >
+                    <i class="fa-solid fa-gift text-base"></i>
+                    <span>Both (Choice)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- CUSTOM REWARDS & OFFERS MANAGER -->
+            <div class="pt-4 border-t border-slate-700/80 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <i class="fa-solid fa-award text-amber-400"></i>
+                    <span>Configurable Reward Offers & Slices ({{ loyaltyConfig.rewards.length }})</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-400">These offers will appear on the Lucky Spinner Wheel and Scratch Card</p>
+                </div>
+
+                <button
+                  type="button"
+                  @click="openRewardEditModal(null)"
+                  class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-700 border border-slate-700 text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <i class="fa-solid fa-plus"></i> Add New Offer
+                </button>
+              </div>
+
+              <!-- Reward Cards Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div
+                  v-for="(reward, rIdx) in loyaltyConfig.rewards"
+                  :key="reward.id"
+                  class="p-3.5 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-between group hover:border-slate-600 transition"
+                  :style="{ borderLeftColor: reward.color, borderLeftWidth: '4px' }"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow"
+                      :style="{ backgroundColor: reward.color + '25', color: reward.color }"
+                    >
+                      <i :class="reward.icon || 'fa-solid fa-gift'"></i>
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white line-clamp-1">{{ reward.title }}</div>
+                      <div class="text-[10px] text-slate-400">
+                        <span v-if="reward.type === 'percent'">{{ reward.value }}% Percentage OFF</span>
+                        <span v-else-if="reward.type === 'flat'">Flat {{ restaurant?.currency }}{{ reward.value }} OFF</span>
+                        <span v-else-if="reward.type === 'bogo'">BOGO / Buy 1 Get 1 Free</span>
+                        <span v-else>Free Item / Gift</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      @click="openRewardEditModal(reward, rIdx)"
+                      class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                      title="Edit Offer"
+                    >
+                      <i class="fa-solid fa-pen-to-square text-xs"></i>
+                    </button>
+                    <button
+                      type="button"
+                      @click="deleteRewardOffer(rIdx)"
+                      :disabled="loyaltyConfig.rewards.length <= 2"
+                      class="p-1.5 text-slate-500 hover:text-rose-400 disabled:opacity-30 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                      title="Delete Offer"
+                    >
+                      <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Loyal Diners Table -->
+          <div class="bg-slate-800/80 p-6 rounded-3xl border border-slate-700 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-extrabold text-sm text-white flex items-center gap-2">
+                  <i class="fa-solid fa-ranking-star text-amber-400"></i>
+                  <span>Top Loyal Customers Leaderboard</span>
+                </h3>
+                <p class="text-xs text-slate-400">Customers with date-wise visit stamps and reward status</p>
+              </div>
+            </div>
+
+            <div v-if="loyaltyCustomers.length === 0" class="py-8 text-center text-slate-500 text-xs">
+              No orders with customer phone numbers recorded yet.
+            </div>
+
+            <div v-else class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-700 text-slate-400 text-[10px] uppercase font-bold">
+                    <th class="pb-3">Customer</th>
+                    <th class="pb-3">Phone</th>
+                    <th class="pb-3 text-center">Distinct Visits</th>
+                    <th class="pb-3 text-center">Milestone Stamp</th>
+                    <th class="pb-3 text-right">Total Spent</th>
+                    <th class="pb-3 text-center">Rewards Claimed</th>
+                    <th class="pb-3 text-right">Last Visit</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/60">
+                  <tr v-for="c in loyaltyCustomers" :key="c.customer_phone" class="hover:bg-slate-750 transition">
+                    <td class="py-3 font-bold text-white">{{ c.customer_name || 'Guest Diner' }}</td>
+                    <td class="py-3 font-mono text-slate-300">{{ c.customer_phone }}</td>
+                    <td class="py-3 text-center">
+                      <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold text-[11px]">
+                        {{ c.distinct_visits }} visits
+                      </span>
+                    </td>
+                    <td class="py-3 text-center">
+                      <div class="inline-flex items-center gap-1">
+                        <span
+                          v-for="s in (loyaltyConfig.required_visits || 5)"
+                          :key="s"
+                          class="w-4 h-4 rounded-full flex items-center justify-center text-[9px]"
+                          :class="s <= (c.distinct_visits % (loyaltyConfig.required_visits || 5) || (c.distinct_visits >= (loyaltyConfig.required_visits || 5) ? (loyaltyConfig.required_visits || 5) : 0)) ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-700 text-slate-500'"
+                        >
+                          ★
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-3 text-right font-bold text-slate-200">
+                      {{ restaurant?.currency }}{{ Number(c.total_spent || 0).toFixed(2) }}
+                    </td>
+                    <td class="py-3 text-center">
+                      <span
+                        v-if="c.rewards_claimed > 0"
+                        class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]"
+                      >
+                        {{ c.rewards_claimed }} Claimed
+                      </span>
+                      <span v-else class="text-slate-500 text-[10px]">—</span>
+                    </td>
+                    <td class="py-3 text-right text-slate-400 text-[11px]">
+                      {{ formatDate(c.last_visit) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- TAB 6: RESTAURANT & PAYMENT SETTINGS -->
         <div v-if="activeTab === 'settings'" class="max-w-3xl space-y-6">
           <div>
@@ -2207,6 +2495,129 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal: Add/Edit Custom Loyalty Reward Offer -->
+    <div
+      v-if="showRewardModal"
+      class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      @click.self="showRewardModal = false"
+    >
+      <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl text-white">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-700 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
+              <i :class="rewardForm.icon || 'fa-solid fa-gift'"></i>
+            </span>
+            <h3 class="font-extrabold text-sm">
+              {{ editingRewardIndex !== null ? 'Edit Loyalty Offer' : 'Add New Loyalty Offer' }}
+            </h3>
+          </div>
+          <button @click="showRewardModal = false" class="text-slate-400 hover:text-white cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveRewardOffer" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Offer Title / Slice Label *</label>
+            <input
+              v-model="rewardForm.title"
+              type="text"
+              required
+              placeholder="e.g. ₹100 Flat OFF, 40% Mega Discount, Buy 1 Get 1 Free"
+              class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Discount Type *</label>
+              <select
+                v-model="rewardForm.type"
+                required
+                class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+              >
+                <option value="flat">Flat ₹ / Currency OFF</option>
+                <option value="percent">Percentage % OFF</option>
+                <option value="bogo">BOGO (Buy 1 Get 1)</option>
+                <option value="free_item">Free Item / Gift</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">
+                {{ rewardForm.type === 'percent' ? 'Discount % *' : `Value (${restaurant?.currency || '₹'}) *` }}
+              </label>
+              <input
+                v-model.number="rewardForm.value"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <!-- Color Swatches -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Slice / Card Color</label>
+            <div class="flex items-center gap-2">
+              <input
+                type="color"
+                v-model="rewardForm.color"
+                class="w-9 h-9 rounded-xl border border-slate-700 bg-slate-950 cursor-pointer p-0.5"
+              />
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  v-for="c in ['#f59e0b', '#10b981', '#8b5cf6', '#ec4899', '#06b6d4', '#ef4444', '#f97316', '#3b82f6']"
+                  :key="c"
+                  @click="rewardForm.color = c"
+                  class="w-6 h-6 rounded-lg border border-white/20 transition cursor-pointer"
+                  :style="{ backgroundColor: c }"
+                ></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Icon Selector -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Icon</label>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                v-for="ic in ['fa-solid fa-gift', 'fa-solid fa-percent', 'fa-solid fa-tag', 'fa-solid fa-bag-shopping', 'fa-solid fa-mug-hot', 'fa-solid fa-utensils', 'fa-solid fa-bowl-food', 'fa-solid fa-award']"
+                :key="ic"
+                @click="rewardForm.icon = ic"
+                :class="[
+                  'w-8 h-8 rounded-xl border flex items-center justify-center text-xs transition cursor-pointer',
+                  rewardForm.icon === ic ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold' : 'bg-slate-950 border-slate-700 text-slate-400 hover:text-white'
+                ]"
+              >
+                <i :class="ic"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              @click="showRewardModal = false"
+              class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold rounded-xl text-xs shadow-lg transition cursor-pointer"
+            >
+              {{ editingRewardIndex !== null ? 'Update Offer' : 'Save Offer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -2635,6 +3046,7 @@ const tabs = computed(() => {
       icon: isSalon ? 'fa-solid fa-scissors' : 'fa-solid fa-utensils'
     },
     { id: 'categories', name: 'Categories', icon: 'fa-solid fa-list' },
+    { id: 'loyalty', name: 'Loyalty Rewards', icon: 'fa-solid fa-crown text-amber-400' },
     { id: 'settings', name: 'Settings & Timings', icon: 'fa-solid fa-gear' },
   ];
 });
@@ -2672,11 +3084,13 @@ watch(currentTableUrl, () => {
 
 // Lazy load dishes and categories when their tabs are opened
 watch(activeTab, (tab) => {
-  if (tab === 'dishes' && menuItems.value.length === 0) {
+  if (tab === 'menu' && menuItems.value.length === 0) {
     fetchMenuItems();
     if (categories.value.length === 0) fetchCategories();
   } else if (tab === 'categories' && categories.value.length === 0) {
     fetchCategories();
+  } else if (tab === 'loyalty') {
+    fetchLoyaltyData();
   }
 });
 
@@ -3128,6 +3542,127 @@ const updateRestaurantSettings = async () => {
   } finally {
     savingSettings.value = false;
   }
+};
+
+// ==========================================
+// Loyalty Rewards State & Methods
+// ==========================================
+const loyaltyConfig = ref({
+  enabled: true,
+  required_visits: 5,
+  game_type: 'spinner',
+  rewards: [
+    { id: 1, title: '₹100 Flat OFF', type: 'flat', value: 100, color: '#f59e0b', icon: 'fa-solid fa-gift' },
+    { id: 2, title: '40% Mega Discount', type: 'percent', value: 40, color: '#10b981', icon: 'fa-solid fa-percent' },
+    { id: 3, title: 'Buy 1 Get 1 Free (BOGO)', type: 'bogo', value: 100, color: '#8b5cf6', icon: 'fa-solid fa-bag-shopping' },
+    { id: 4, title: '₹50 Instant OFF', type: 'flat', value: 50, color: '#ec4899', icon: 'fa-solid fa-wallet' },
+    { id: 5, title: 'Free Dessert / Drink', type: 'free_item', value: 80, color: '#06b6d4', icon: 'fa-solid fa-mug-hot' },
+    { id: 6, title: '25% Special Treat', type: 'percent', value: 25, color: '#f97316', icon: 'fa-solid fa-tag' },
+  ],
+});
+const loyaltyCustomers = ref([]);
+const loyaltyStats = ref({});
+const savingLoyalty = ref(false);
+
+const showRewardModal = ref(false);
+const editingRewardIndex = ref(null);
+const rewardForm = ref({
+  title: '',
+  type: 'flat',
+  value: 100,
+  color: '#f59e0b',
+  icon: 'fa-solid fa-gift',
+});
+
+const fetchLoyaltyData = async () => {
+  try {
+    const res = await axios.get('/owner/loyalty');
+    if (res.data.success) {
+      loyaltyConfig.value.enabled = res.data.loyalty_enabled;
+      loyaltyConfig.value.required_visits = res.data.loyalty_required_visits;
+      loyaltyConfig.value.game_type = res.data.loyalty_game_type;
+      loyaltyConfig.value.rewards = res.data.rewards || [];
+      loyaltyCustomers.value = res.data.customers || [];
+      loyaltyStats.value = res.data.stats || {};
+    }
+  } catch (err) {
+    console.error('Failed to load loyalty data', err);
+  }
+};
+
+const toggleLoyaltyEnabled = () => {
+  loyaltyConfig.value.enabled = !loyaltyConfig.value.enabled;
+  saveLoyaltySettings();
+};
+
+const saveLoyaltySettings = async () => {
+  savingLoyalty.value = true;
+  try {
+    const res = await axios.put('/owner/loyalty', {
+      loyalty_enabled: loyaltyConfig.value.enabled,
+      loyalty_required_visits: loyaltyConfig.value.required_visits,
+      loyalty_game_type: loyaltyConfig.value.game_type,
+      rewards: loyaltyConfig.value.rewards,
+    });
+    if (res.data.success) {
+      alert('Loyalty program settings saved successfully!');
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to save loyalty settings');
+  } finally {
+    savingLoyalty.value = false;
+  }
+};
+
+const openRewardEditModal = (reward = null, index = null) => {
+  if (reward && index !== null) {
+    editingRewardIndex.value = index;
+    rewardForm.value = { ...reward };
+  } else {
+    editingRewardIndex.value = null;
+    rewardForm.value = {
+      title: '',
+      type: 'flat',
+      value: 100,
+      color: '#f59e0b',
+      icon: 'fa-solid fa-gift',
+    };
+  }
+  showRewardModal.value = true;
+};
+
+const saveRewardOffer = () => {
+  if (!rewardForm.value.title.trim()) return;
+
+  if (editingRewardIndex.value !== null) {
+    loyaltyConfig.value.rewards[editingRewardIndex.value] = {
+      ...loyaltyConfig.value.rewards[editingRewardIndex.value],
+      ...rewardForm.value,
+    };
+  } else {
+    loyaltyConfig.value.rewards.push({
+      id: Date.now(),
+      ...rewardForm.value,
+    });
+  }
+
+  showRewardModal.value = false;
+  saveLoyaltySettings();
+};
+
+const deleteRewardOffer = (index) => {
+  if (loyaltyConfig.value.rewards.length <= 2) {
+    alert('At least 2 offers are required for the game wheel/scratch card.');
+    return;
+  }
+  loyaltyConfig.value.rewards.splice(index, 1);
+  saveLoyaltySettings();
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 const handleLogout = async () => {

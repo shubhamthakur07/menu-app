@@ -160,6 +160,67 @@
         </div>
       </div>
 
+      <!-- Loyalty & Rewards Banner Card -->
+      <div v-if="loyaltyStatus && loyaltyStatus.loyalty_enabled !== false" class="max-w-3xl mx-auto px-4 mt-3 mb-1">
+        <div
+          @click="openLoyaltyModal"
+          class="bg-gradient-to-r from-amber-500/10 via-orange-500/15 to-purple-500/15 hover:from-amber-500/20 hover:to-purple-500/20 border-2 border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow shrink-0 group-hover:scale-105 transition">
+              <i class="fa-solid fa-crown animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">
+                  Royalty Rewards Club
+                </span>
+                <span
+                  v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
+                  class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow"
+                >
+                  🎉 Ticket Ready to Spin!
+                </span>
+                <span
+                  v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0"
+                  class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-full"
+                >
+                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} Visits
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                <template v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play">
+                  Aapke paas <strong>1 Lucky Reward Ticket</strong> ready hai! Spin karein aur discount jeetein!
+                </template>
+                <template v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0">
+                  {{ loyaltyStatus.customer.visits_remaining }} aur visit par Lucky Spinner / Scratch Card unlock hoga!
+                </template>
+                <template v-else>
+                  Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
+                </template>
+              </p>
+            </div>
+          </div>
+
+          <div class="shrink-0 flex items-center gap-2">
+            <button
+              v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
+              class="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <i class="fa-solid fa-dharmachakra animate-spin"></i>
+              <span>Spin & Win</span>
+            </button>
+            <button
+              v-else
+              class="px-3 py-1.5 bg-white text-slate-800 border border-slate-300 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
+            >
+              <i class="fa-solid fa-ticket text-amber-500"></i>
+              <span class="hidden sm:inline">View</span> Stamps
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Main Sticky Navigation & Filters -->
       <div class="sticky top-0 z-30 bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200">
         <div class="max-w-3xl mx-auto px-4 py-2.5">
@@ -373,6 +434,67 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loyalty & Rewards Banner Card -->
+      <div v-if="loyaltyStatus && loyaltyStatus.loyalty_enabled !== false" class="max-w-3xl mx-auto px-4 mt-3 mb-1">
+        <div
+          @click="openLoyaltyModal"
+          class="bg-gradient-to-r from-amber-500/10 via-orange-500/15 to-purple-500/15 hover:from-amber-500/20 hover:to-purple-500/20 border-2 border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow shrink-0 group-hover:scale-105 transition">
+              <i class="fa-solid fa-crown animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">
+                  Royalty Rewards Club
+                </span>
+                <span
+                  v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
+                  class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow"
+                >
+                  🎉 Ticket Ready to Spin!
+                </span>
+                <span
+                  v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0"
+                  class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-full"
+                >
+                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} Visits
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                <template v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play">
+                  Aapke paas <strong>1 Lucky Reward Ticket</strong> ready hai! Spin karein aur discount jeetein!
+                </template>
+                <template v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0">
+                  {{ loyaltyStatus.customer.visits_remaining }} aur visit par Lucky Spinner / Scratch Card unlock hoga!
+                </template>
+                <template v-else>
+                  Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
+                </template>
+              </p>
+            </div>
+          </div>
+
+          <div class="shrink-0 flex items-center gap-2">
+            <button
+              v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
+              class="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <i class="fa-solid fa-dharmachakra animate-spin"></i>
+              <span>Spin & Win</span>
+            </button>
+            <button
+              v-else
+              class="px-3 py-1.5 bg-white text-slate-800 border border-slate-300 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
+            >
+              <i class="fa-solid fa-ticket text-amber-500"></i>
+              <span class="hidden sm:inline">View</span> Stamps
+            </button>
           </div>
         </div>
       </div>
@@ -602,11 +724,42 @@
               </div>
             </div>
 
+            <!-- Royalty Reward Voucher Applied Banner -->
+            <div v-if="activeLoyaltyVoucher" class="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-purple-500/15 border-2 border-amber-400 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">👑</span>
+                <div>
+                  <div class="text-[11px] font-black text-amber-950 flex items-center gap-1.5">
+                    <span>Royalty Reward Applied!</span>
+                    <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wide">VOUCHER</span>
+                  </div>
+                  <div class="text-[10px] text-slate-700 font-semibold">{{ activeLoyaltyVoucher.reward_title }}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-emerald-600">-{{ restaurant.currency }}{{ loyaltyDiscountAmount.toFixed(2) }}</span>
+                <button
+                  type="button"
+                  @click="removeVoucher"
+                  class="text-[10px] text-rose-500 hover:text-rose-700 underline font-semibold cursor-pointer"
+                  title="Remove voucher"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+
             <!-- Pricing Calculation Breakdown -->
             <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-xs">
               <div class="flex justify-between text-slate-600">
                 <span>Subtotal:</span>
                 <span>{{ restaurant.currency }}{{ cartSubtotal.toFixed(2) }}</span>
+              </div>
+              <div v-if="activeLoyaltyVoucher" class="flex justify-between text-emerald-600 font-bold">
+                <span class="flex items-center gap-1">
+                  <i class="fa-solid fa-crown text-amber-500"></i> Royalty Discount ({{ activeLoyaltyVoucher.reward_title }}):
+                </span>
+                <span>-{{ restaurant.currency }}{{ loyaltyDiscountAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-slate-600">
                 <span>GST / Taxes ({{ restaurant.tax_percentage }}%):</span>
@@ -638,6 +791,67 @@
                 Add to {{ currentTable }} Order • {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}
               </span>
               <span v-else>Confirm & Pay {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loyalty & Rewards Banner Card -->
+      <div v-if="loyaltyStatus && loyaltyStatus.loyalty_enabled !== false" class="max-w-3xl mx-auto px-4 mt-3 mb-1">
+        <div
+          @click="openLoyaltyModal"
+          class="bg-gradient-to-r from-amber-500/10 via-orange-500/15 to-purple-500/15 hover:from-amber-500/20 hover:to-purple-500/20 border-2 border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow shrink-0 group-hover:scale-105 transition">
+              <i class="fa-solid fa-crown animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">
+                  Royalty Rewards Club
+                </span>
+                <span
+                  v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
+                  class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow"
+                >
+                  🎉 Ticket Ready to Spin!
+                </span>
+                <span
+                  v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0"
+                  class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-full"
+                >
+                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} Visits
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                <template v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play">
+                  Aapke paas <strong>1 Lucky Reward Ticket</strong> ready hai! Spin karein aur discount jeetein!
+                </template>
+                <template v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0">
+                  {{ loyaltyStatus.customer.visits_remaining }} aur visit par Lucky Spinner / Scratch Card unlock hoga!
+                </template>
+                <template v-else>
+                  Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
+                </template>
+              </p>
+            </div>
+          </div>
+
+          <div class="shrink-0 flex items-center gap-2">
+            <button
+              v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
+              class="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <i class="fa-solid fa-dharmachakra animate-spin"></i>
+              <span>Spin & Win</span>
+            </button>
+            <button
+              v-else
+              class="px-3 py-1.5 bg-white text-slate-800 border border-slate-300 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
+            >
+              <i class="fa-solid fa-ticket text-amber-500"></i>
+              <span class="hidden sm:inline">View</span> Stamps
             </button>
           </div>
         </div>
@@ -844,6 +1058,409 @@
       </div>
     </div>
 
+    <!-- Royalty Rewards Club Modal (Visit Stamps, Lucky Spinner & Scratch Card) -->
+    <div
+      v-if="showLoyaltyModal"
+      class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      @click.self="showLoyaltyModal = false"
+    >
+      <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-amber-500/30 overflow-hidden flex flex-col max-h-[92vh]">
+        <!-- Modal Header -->
+        <div class="px-5 py-4 bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 text-white flex items-center justify-between border-b border-amber-500/20 shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide">Royalty Rewards Club</h3>
+                <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  {{ restaurant?.name }}
+                </span>
+              </div>
+              <p class="text-[10px] text-amber-200/80">Every visit earns a stamp • Win exclusive discounts!</p>
+            </div>
+          </div>
+
+          <button
+            @click="showLoyaltyModal = false"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white flex items-center justify-center transition cursor-pointer"
+          >
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-200 bg-slate-50 px-4 pt-2 gap-2 text-xs font-bold shrink-0">
+          <button
+            @click="loyaltyModalTab = 'game'"
+            :class="[
+              'py-2.5 px-4 rounded-t-xl transition border-b-2 cursor-pointer flex items-center gap-2',
+              loyaltyModalTab === 'game'
+                ? 'bg-white border-amber-500 text-amber-700 shadow-xs'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            ]"
+          >
+            <i class="fa-solid fa-dharmachakra"></i>
+            <span>Lucky Game</span>
+            <span
+              v-if="loyaltyStatus?.customer?.can_play"
+              class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"
+            ></span>
+          </button>
+
+          <button
+            @click="loyaltyModalTab = 'stamps'"
+            :class="[
+              'py-2.5 px-4 rounded-t-xl transition border-b-2 cursor-pointer flex items-center gap-2',
+              loyaltyModalTab === 'stamps'
+                ? 'bg-white border-amber-500 text-amber-700 shadow-xs'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            ]"
+          >
+            <i class="fa-solid fa-stamp"></i>
+            <span>Visit Stamp Card</span>
+            <span
+              v-if="loyaltyStatus?.customer"
+              class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded-full"
+            >
+              {{ loyaltyStatus.customer.visit_count }}/{{ loyaltyStatus.required_visits }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Body Content -->
+        <div class="p-5 overflow-y-auto space-y-4 flex-1">
+          <!-- Customer Phone Check if not identified -->
+          <div
+            v-if="!customerForm.phone && (!loyaltyStatus?.customer || !loyaltyStatus.customer.customer_phone)"
+            class="bg-amber-50 border border-amber-300 rounded-2xl p-3.5 text-xs text-amber-950"
+          >
+            <div class="font-bold flex items-center gap-1.5 mb-1 text-amber-900">
+              <i class="fa-solid fa-mobile-screen text-amber-600"></i> Enter your mobile number
+            </div>
+            <p class="text-[11px] text-amber-800/90 mb-2.5">
+              Enter your mobile number to view your earned visit stamps, ticket balance, and unlock rewards!
+            </p>
+            <div class="flex gap-2">
+              <input
+                v-model="phoneCheckInput"
+                type="tel"
+                placeholder="10-digit mobile number"
+                class="flex-1 px-3 py-2 bg-white rounded-xl border border-amber-300 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                @keyup.enter="handlePhoneLookup"
+              />
+              <button
+                @click="handlePhoneLookup"
+                :disabled="phoneCheckLoading || !phoneCheckInput"
+                class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition cursor-pointer disabled:opacity-50"
+              >
+                <i v-if="phoneCheckLoading" class="fa-solid fa-circle-notch fa-spin"></i>
+                <span v-else>Check Stamps</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 1: Lucky Game (Spinner / Scratch Card) -->
+          <div v-if="loyaltyModalTab === 'game'" class="space-y-4">
+            <!-- Active Game Mode Switcher if restaurant allows 'both' -->
+            <div
+              v-if="loyaltyStatus?.loyalty_game_type === 'both' && !activeLoyaltyVoucher"
+              class="flex justify-center bg-slate-100 p-1 rounded-2xl max-w-xs mx-auto text-xs font-bold"
+            >
+              <button
+                @click="activeGameType = 'spinner'"
+                :class="[
+                  'flex-1 py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer',
+                  activeGameType === 'spinner' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                ]"
+              >
+                <i class="fa-solid fa-dharmachakra text-amber-500"></i>
+                <span>Lucky Spinner</span>
+              </button>
+              <button
+                @click="switchGameToScratch"
+                :class="[
+                  'flex-1 py-1.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer',
+                  activeGameType === 'scratch' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                ]"
+              >
+                <i class="fa-solid fa-sparkles text-purple-500"></i>
+                <span>Scratch Card</span>
+              </button>
+            </div>
+
+            <!-- Won Voucher Banner if user already holds an unredeemed voucher -->
+            <div
+              v-if="activeLoyaltyVoucher"
+              class="bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-purple-500/20 border-2 border-amber-400 rounded-3xl p-5 text-center shadow-lg relative overflow-hidden"
+            >
+              <div class="text-4xl mb-2 animate-bounce">🎉</div>
+              <div class="inline-block bg-amber-500 text-slate-950 font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+                ACTIVE REWARD UNLOCKED
+              </div>
+              <h4 class="text-lg sm:text-xl font-black text-slate-900">
+                {{ activeLoyaltyVoucher.reward_title }}
+              </h4>
+              <p class="text-xs text-slate-600 mt-1 max-w-sm mx-auto">
+                {{ activeLoyaltyVoucher.reward_description }}
+              </p>
+
+              <div class="mt-4 p-3 bg-white/90 rounded-2xl border border-amber-300 inline-block font-mono text-xs">
+                <span class="text-slate-500 text-[10px] block">Voucher Signature Code:</span>
+                <span class="font-extrabold text-amber-700 tracking-wider">
+                  {{ activeLoyaltyVoucher.signature ? activeLoyaltyVoucher.signature.substring(0, 16).toUpperCase() : 'REWARD-CLAIMED' }}
+                </span>
+              </div>
+
+              <div class="mt-4 flex items-center justify-center gap-2">
+                <button
+                  @click="showLoyaltyModal = false; showCheckoutModal = true;"
+                  class="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs rounded-xl shadow-md hover:from-emerald-500 hover:to-teal-500 transition cursor-pointer flex items-center gap-2"
+                >
+                  <i class="fa-solid fa-cart-shopping"></i>
+                  <span>Use at Checkout Now</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- GAME ACTIVE (User has ticket to play!) -->
+            <div v-else-if="loyaltyStatus?.customer?.can_play" class="space-y-4 text-center">
+              <div class="bg-gradient-to-r from-amber-500/20 to-purple-500/20 border border-amber-400/50 rounded-2xl p-2.5 text-xs text-slate-900 font-extrabold flex items-center justify-center gap-2">
+                <span class="text-base">🎟️</span>
+                <span>You have 1 Lucky Reward Ticket! {{ activeGameType === 'spinner' ? 'Spin the wheel below to win:' : 'Scratch the card below to reveal your prize:' }}</span>
+              </div>
+
+              <!-- SPINNER WHEEL VIEW -->
+              <div v-if="activeGameType === 'spinner'" class="flex flex-col items-center justify-center py-2">
+                <div class="relative w-[300px] h-[300px] sm:w-[320px] sm:h-[320px]">
+                  <!-- Needle pointer at 12 o'clock -->
+                  <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[28px] border-t-amber-500 drop-shadow-md"></div>
+
+                  <!-- Canvas wheel with CSS rotation -->
+                  <canvas
+                    ref="spinnerCanvasRef"
+                    width="320"
+                    height="320"
+                    class="rounded-full shadow-2xl border-4 border-amber-400 transition-transform"
+                    :style="{
+                      transform: `rotate(${spinnerRotation}deg)`,
+                      transitionDuration: isSpinning ? '4.5s' : '0s',
+                      transitionTimingFunction: 'cubic-bezier(0.15, 0.9, 0.25, 1)'
+                    }"
+                  ></canvas>
+
+                  <!-- Center Spin button -->
+                  <button
+                    @click="spinWheel"
+                    :disabled="isSpinning"
+                    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 via-amber-500 to-orange-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl border-4 border-white flex flex-col items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition disabled:opacity-80"
+                  >
+                    <i class="fa-solid fa-play text-sm"></i>
+                    <span class="text-[9px] font-black mt-0.5">{{ isSpinning ? '...' : 'SPIN' }}</span>
+                  </button>
+                </div>
+
+                <p class="text-[11px] text-slate-500 mt-4">
+                  Tap <strong>SPIN</strong> to spin the lucky wheel and claim your discount!
+                </p>
+              </div>
+
+              <!-- SCRATCH CARD VIEW -->
+              <div v-else class="flex flex-col items-center justify-center py-2">
+                <div class="relative w-[300px] h-[180px] rounded-3xl overflow-hidden shadow-xl border-2 border-purple-400">
+                  <!-- Hidden Prize Underneath -->
+                  <div class="absolute inset-0 bg-gradient-to-br from-amber-400/20 via-pink-400/20 to-purple-400/30 flex flex-col items-center justify-center p-4 text-center">
+                    <div class="text-3xl mb-1">🎁</div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-purple-700">LUCKY PRIZE</span>
+                    <div class="text-base font-black text-slate-900 leading-tight">
+                      {{ mysteryScratchReward?.title || 'Mega Discount Offer' }}
+                    </div>
+                    <div class="text-[11px] text-slate-600 mt-0.5">
+                      {{ mysteryScratchReward?.description || 'Exclusive Loyalty Reward' }}
+                    </div>
+                  </div>
+
+                  <!-- Scratch Canvas on Top -->
+                  <canvas
+                    ref="scratchCanvasRef"
+                    width="300"
+                    height="180"
+                    class="absolute inset-0 cursor-crosshair touch-none select-none z-10 transition-opacity duration-500"
+                    :class="{ 'opacity-0 pointer-events-none': scratchRevealed }"
+                    @mousedown="startScratch"
+                    @mousemove="doScratch"
+                    @mouseup="endScratch"
+                    @mouseleave="endScratch"
+                    @touchstart="startScratchTouch"
+                    @touchmove="doScratchTouch"
+                    @touchend="endScratch"
+                  ></canvas>
+                </div>
+
+                <div class="flex items-center gap-2 mt-3 text-xs text-slate-600">
+                  <i class="fa-solid fa-hand-pointer text-purple-500 animate-bounce"></i>
+                  <span>Scratch with finger or mouse to reveal your reward!</span>
+                  <span v-if="scratchPercent > 0" class="font-bold text-purple-600">({{ scratchPercent }}%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- LOCKED STATE (Customer doesn't have ticket yet) -->
+            <div v-else class="space-y-4">
+              <div class="bg-slate-50 border border-slate-200 rounded-3xl p-5 text-center relative overflow-hidden">
+                <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner">
+                  <i class="fa-solid fa-lock"></i>
+                </div>
+                <h4 class="font-extrabold text-sm sm:text-base text-slate-900">
+                  Lucky Reward Wheel Locked
+                </h4>
+                <p class="text-xs text-slate-600 mt-1 max-w-sm mx-auto">
+                  <template v-if="loyaltyStatus?.customer && loyaltyStatus.customer.visit_count > 0">
+                    Aapne <strong>{{ loyaltyStatus.customer.visit_count }}</strong> visit(s) kiye hain. <strong>{{ loyaltyStatus.customer.visits_remaining }}</strong> aur visit karne par Lucky Ticket unlock hoga!
+                  </template>
+                  <template v-else>
+                    Har distinct order date par 1 stamp milta hai. <strong>{{ loyaltyStatus?.required_visits || 5 }}</strong> visits poori karne par Lucky Spinner / Scratch card unlock hoga!
+                  </template>
+                </p>
+
+                <!-- Mini Progress Bar -->
+                <div class="mt-4 max-w-xs mx-auto">
+                  <div class="flex justify-between text-[11px] font-bold text-slate-600 mb-1">
+                    <span>Progress</span>
+                    <span>{{ loyaltyStatus?.customer?.visit_count || 0 }} / {{ loyaltyStatus?.required_visits || 5 }} Visits</span>
+                  </div>
+                  <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      class="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                      :style="{ width: `${Math.min(100, (((loyaltyStatus?.customer?.visit_count || 0) % (loyaltyStatus?.required_visits || 5)) / (loyaltyStatus?.required_visits || 5)) * 100)}%` }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Available Prizes Showcase -->
+              <div>
+                <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <i class="fa-solid fa-gift text-amber-500"></i> Exciting Prizes Waiting to be Won:
+                </h5>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div
+                    v-for="rew in (loyaltyStatus?.rewards || [])"
+                    :key="rew.id"
+                    class="p-2.5 rounded-2xl border border-slate-200 bg-white flex items-center gap-2.5 shadow-xs"
+                  >
+                    <div
+                      class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 text-white"
+                      :style="{ backgroundColor: rew.color || '#f59e0b' }"
+                    >
+                      <i :class="rew.icon || 'fa-solid fa-gift'"></i>
+                    </div>
+                    <div class="truncate">
+                      <div class="font-extrabold text-slate-900 truncate">{{ rew.title }}</div>
+                      <div class="text-[10px] text-slate-500 truncate">{{ rew.description }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Visit Stamp Card -->
+          <div v-else-if="loyaltyModalTab === 'stamps'" class="space-y-4">
+            <div class="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-yellow-500/10 border-2 border-amber-300 rounded-3xl p-5 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h4 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-passport text-amber-600"></i> Royal Stamp Passport
+                  </h4>
+                  <p class="text-[10px] text-slate-600">1 visit stamp per distinct order date</p>
+                </div>
+                <span class="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full">
+                  {{ loyaltyStatus?.customer?.visit_count || 0 }} Total Visits
+                </span>
+              </div>
+
+              <!-- Stamp Slots Grid -->
+              <div class="grid grid-cols-5 gap-2.5 my-4">
+                <div
+                  v-for="index in (loyaltyStatus?.required_visits || 5)"
+                  :key="index"
+                  :class="[
+                    'aspect-square rounded-2xl flex flex-col items-center justify-center p-1 text-center border-2 transition',
+                    index <= ((loyaltyStatus?.customer?.visit_count || 0) % (loyaltyStatus?.required_visits || 5) === 0 && (loyaltyStatus?.customer?.visit_count || 0) > 0 ? (loyaltyStatus?.required_visits || 5) : ((loyaltyStatus?.customer?.visit_count || 0) % (loyaltyStatus?.required_visits || 5)))
+                      ? 'bg-gradient-to-tr from-amber-400 to-yellow-300 border-amber-500 text-slate-950 font-black shadow-md scale-102'
+                      : 'bg-white/80 border-dashed border-slate-300 text-slate-400'
+                  ]"
+                >
+                  <template v-if="index <= ((loyaltyStatus?.customer?.visit_count || 0) % (loyaltyStatus?.required_visits || 5) === 0 && (loyaltyStatus?.customer?.visit_count || 0) > 0 ? (loyaltyStatus?.required_visits || 5) : ((loyaltyStatus?.customer?.visit_count || 0) % (loyaltyStatus?.required_visits || 5)))">
+                    <i class="fa-solid fa-crown text-base text-amber-950"></i>
+                    <span class="text-[9px] font-black uppercase mt-0.5">Stamp #{{ index }}</span>
+                  </template>
+                  <template v-else>
+                    <i class="fa-solid fa-lock text-xs text-slate-300"></i>
+                    <span class="text-[9px] font-semibold mt-0.5">#{{ index }}</span>
+                  </template>
+                </div>
+              </div>
+
+              <div class="text-[11px] text-slate-600 bg-white/70 p-3 rounded-2xl border border-amber-200/60 leading-relaxed">
+                <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                <template v-if="loyaltyStatus?.customer && loyaltyStatus.customer.can_play">
+                  Milestone reached! Aapke paas <strong>{{ loyaltyStatus.customer.available_tickets }} Lucky Ticket</strong> ready hai! Lucky Game tab par jaakar spin karein!
+                </template>
+                <template v-else-if="loyaltyStatus?.customer && loyaltyStatus.customer.visit_count > 0">
+                  Aapko Lucky Spinner ticket paane ke liye <strong>{{ loyaltyStatus.customer.visits_remaining }}</strong> aur distinct date visit(s) ki zaroorat hai.
+                </template>
+                <template v-else>
+                  Is restaurant se order karne par har din ek stamp milega. <strong>{{ loyaltyStatus?.required_visits || 5 }}</strong> stamps poore hote hi Lucky Wheel spin karne ka mauka milega!
+                </template>
+              </div>
+            </div>
+
+            <!-- Recent Visits History if available -->
+            <div v-if="loyaltyStatus?.customer?.recent_visits && loyaltyStatus.customer.recent_visits.length > 0">
+              <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Recent Visit Dates:</h5>
+              <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                <div
+                  v-for="(vDate, idx) in loyaltyStatus.customer.recent_visits"
+                  :key="idx"
+                  class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs"
+                >
+                  <span class="flex items-center gap-2 font-medium text-slate-800">
+                    <i class="fa-solid fa-calendar-check text-emerald-600"></i>
+                    {{ vDate }}
+                  </span>
+                  <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    ✓ Verified Visit Stamp
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <button
+            @click="showLoyaltyModal = false"
+            class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition cursor-pointer"
+          >
+            Close
+          </button>
+
+          <button
+            v-if="activeLoyaltyVoucher"
+            @click="showLoyaltyModal = false; showCheckoutModal = true;"
+            class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs rounded-xl shadow transition cursor-pointer flex items-center gap-1.5"
+          >
+            <span>Proceed to Checkout</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Menu PDF Preview & Download Modal -->
     <div
       v-if="showPdfModal"
@@ -1022,11 +1639,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import QRCode from 'qrcode';
 import html2pdf from 'html2pdf.js';
+import { playSound, launchConfetti } from '../utils/notification.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -1054,6 +1672,24 @@ const customerForm = ref({
 const paymentMethod = ref('upi');
 const submittingOrder = ref(false);
 const orderError = ref('');
+
+// Royalty Rewards State
+const loyaltyStatus = ref(null);
+const showLoyaltyModal = ref(false);
+const activeLoyaltyVoucher = ref(null);
+const loyaltyModalTab = ref('game'); // 'game' or 'stamps'
+const activeGameType = ref('spinner'); // 'spinner' or 'scratch'
+const isSpinning = ref(false);
+const spinnerRotation = ref(0);
+const spinnerCanvasRef = ref(null);
+const scratchCanvasRef = ref(null);
+const scratchPercent = ref(0);
+const scratchRevealed = ref(false);
+const isScratching = ref(false);
+const phoneCheckInput = ref(localStorage.getItem('qrmenu_customer_phone') || '');
+const phoneCheckLoading = ref(false);
+const claimingReward = ref(false);
+const mysteryScratchReward = ref(null);
 
 // Salon Booking & Slots state
 const salonSlots = ref([]);
@@ -1224,6 +1860,14 @@ const fetchMenu = async () => {
         orderType.value = 'dine_in';
         fetchSlots(selectedBookingDate.value);
       }
+
+      // Load Royalty Rewards status & saved voucher
+      if (restaurant.value.loyalty_enabled !== false) {
+        if (restaurant.value.loyalty_game_type === 'scratch_card') {
+          activeGameType.value = 'scratch';
+        }
+        fetchLoyaltyStatus(customerForm.value.phone);
+      }
     }
   } catch (err) {
     console.error('Failed to load menu', err);
@@ -1370,14 +2014,349 @@ const cartSubtotal = computed(() => {
   return cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
 });
 
+const loyaltyDiscountAmount = computed(() => {
+  if (!activeLoyaltyVoucher.value) return 0;
+  const v = activeLoyaltyVoucher.value;
+  const sub = cartSubtotal.value;
+  const val = Number(v.discount_value) || 0;
+
+  if (v.reward_type === 'percentage') {
+    return Math.round(((sub * val) / 100) * 100) / 100;
+  }
+  if (v.reward_type === 'flat') {
+    return Math.min(sub, val);
+  }
+  if (v.reward_type === 'bogo' || v.reward_type === 'free_item') {
+    if (val > 0) return Math.min(sub, val);
+    return cart.value.length > 0 ? Math.min(sub, cart.value[0].price) : 0;
+  }
+  return Math.min(sub, val);
+});
+
+const discountedSubtotal = computed(() => {
+  return Math.max(0, cartSubtotal.value - loyaltyDiscountAmount.value);
+});
+
 const taxAmount = computed(() => {
   const taxPercent = restaurant.value?.tax_percentage || 0;
-  return (cartSubtotal.value * taxPercent) / 100;
+  return (discountedSubtotal.value * taxPercent) / 100;
 });
 
 const grandTotal = computed(() => {
-  return cartSubtotal.value + taxAmount.value;
+  return discountedSubtotal.value + taxAmount.value;
 });
+
+// Royalty Rewards Helper Functions
+const fetchLoyaltyStatus = async (phone) => {
+  if (!restaurant.value) return;
+  try {
+    const p = phone !== undefined ? phone : customerForm.value.phone;
+    const res = await axios.get(`/r/${restaurant.value.slug}/loyalty-status?phone=${encodeURIComponent(p || '')}`);
+    if (res.data.success) {
+      loyaltyStatus.value = res.data;
+      if (res.data.loyalty_game_type === 'scratch_card') {
+        activeGameType.value = 'scratch';
+      }
+      // Restore active voucher from local storage if available
+      const savedVoucher = localStorage.getItem(`qrmenu_loyalty_voucher_${restaurant.value.id}`);
+      if (savedVoucher && !activeLoyaltyVoucher.value) {
+        try {
+          activeLoyaltyVoucher.value = JSON.parse(savedVoucher);
+        } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load loyalty status', err);
+  }
+};
+
+const drawSpinnerWheel = () => {
+  const canvas = spinnerCanvasRef.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const rewards = loyaltyStatus.value?.rewards?.length
+    ? loyaltyStatus.value.rewards
+    : [
+        { title: '₹100 OFF', color: '#f59e0b' },
+        { title: '40% OFF', color: '#8b5cf6' },
+        { title: 'BOGO FREE', color: '#10b981' },
+        { title: '₹50 OFF', color: '#3b82f6' },
+        { title: 'FREE DESSERT', color: '#ec4899' },
+        { title: '25% SPECIAL', color: '#f97316' },
+      ];
+
+  const numSlices = rewards.length;
+  const arc = (2 * Math.PI) / numSlices;
+  const width = canvas.width;
+  const height = canvas.height;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = centerX - 12;
+
+  ctx.clearRect(0, 0, width, height);
+
+  // Draw slices
+  rewards.forEach((reward, i) => {
+    const angle = i * arc;
+    ctx.beginPath();
+    ctx.fillStyle = reward.color || '#f59e0b';
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, angle, angle + arc);
+    ctx.lineTo(centerX, centerY);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Draw slice text
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle + arc / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(reward.title || 'Offer', radius - 18, 5);
+    ctx.restore();
+  });
+
+  // Outer rim
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#d97706';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Center hub
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 32, 0, 2 * Math.PI);
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#f59e0b';
+  ctx.stroke();
+};
+
+const spinWheel = async () => {
+  if (isSpinning.value || !loyaltyStatus.value?.customer?.can_play) return;
+
+  const rewards = loyaltyStatus.value?.rewards?.length
+    ? loyaltyStatus.value.rewards
+    : [
+        { id: 1, title: '₹100 OFF', reward_type: 'flat', discount_value: 100 },
+        { id: 2, title: '40% OFF', reward_type: 'percentage', discount_value: 40 },
+        { id: 3, title: 'BOGO FREE', reward_type: 'bogo', discount_value: 0 },
+        { id: 4, title: '₹50 OFF', reward_type: 'flat', discount_value: 50 },
+        { id: 5, title: 'FREE DESSERT', reward_type: 'free_item', discount_value: 0 },
+        { id: 6, title: '25% SPECIAL', reward_type: 'percentage', discount_value: 25 },
+      ];
+
+  isSpinning.value = true;
+  const numSlices = rewards.length;
+  const winningIndex = Math.floor(Math.random() * numSlices);
+  const winningReward = rewards[winningIndex];
+
+  // Canvas arc is oriented with 0 at 3 o'clock. Needle is at 12 o'clock (270 deg).
+  const sliceDeg = 360 / numSlices;
+  const sliceCenterDeg = winningIndex * sliceDeg + sliceDeg / 2;
+  const targetDeg = 270 - sliceCenterDeg;
+  const fullRotations = 360 * 5;
+  const finalRotation = spinnerRotation.value + fullRotations + ((targetDeg - (spinnerRotation.value % 360) + 360) % 360);
+
+  spinnerRotation.value = finalRotation;
+  playSound('status_update');
+
+  setTimeout(async () => {
+    isSpinning.value = false;
+    await claimLoyaltyReward(winningReward);
+  }, 4600);
+};
+
+const initScratchCanvas = () => {
+  const canvas = scratchCanvasRef.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  scratchRevealed.value = false;
+  scratchPercent.value = 0;
+
+  const rewards = loyaltyStatus.value?.rewards || [];
+  if (rewards.length > 0) {
+    mysteryScratchReward.value = rewards[Math.floor(Math.random() * rewards.length)];
+  }
+
+  ctx.globalCompositeOperation = 'source-over';
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, '#94a3b8');
+  grad.addColorStop(0.3, '#f1f5f9');
+  grad.addColorStop(0.6, '#cbd5e1');
+  grad.addColorStop(1, '#64748b');
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#f59e0b';
+  for (let i = 0; i < 20; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.random() * 2 + 1, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#1e293b';
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 15px Inter, sans-serif';
+  ctx.fillText('✨ SCRATCH TO REVEAL ✨', canvas.width / 2, canvas.height / 2 - 6);
+
+  ctx.fillStyle = '#475569';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.fillText('Rub with finger or mouse', canvas.width / 2, canvas.height / 2 + 16);
+};
+
+const checkScratchPercentage = () => {
+  const canvas = scratchCanvasRef.value;
+  if (!canvas || scratchRevealed.value) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  try {
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    let transparentPixels = 0;
+    const totalPixels = data.length / 4;
+    for (let i = 3; i < data.length; i += 16) {
+      if (data[i] === 0) transparentPixels += 4;
+    }
+    const percent = Math.min(100, Math.round((transparentPixels / totalPixels) * 100));
+    scratchPercent.value = percent;
+
+    if (percent >= 38 && !scratchRevealed.value) {
+      scratchRevealed.value = true;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      claimLoyaltyReward(mysteryScratchReward.value);
+    }
+  } catch (e) {}
+};
+
+const scratchAt = (x, y) => {
+  const canvas = scratchCanvasRef.value;
+  if (!canvas || scratchRevealed.value) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(x, y, 22, 0, 2 * Math.PI);
+  ctx.fill();
+  checkScratchPercentage();
+};
+
+const startScratch = (e) => {
+  isScratching.value = true;
+  const rect = scratchCanvasRef.value.getBoundingClientRect();
+  scratchAt(e.clientX - rect.left, e.clientY - rect.top);
+};
+
+const doScratch = (e) => {
+  if (!isScratching.value) return;
+  const rect = scratchCanvasRef.value.getBoundingClientRect();
+  scratchAt(e.clientX - rect.left, e.clientY - rect.top);
+};
+
+const endScratch = () => {
+  isScratching.value = false;
+};
+
+const startScratchTouch = (e) => {
+  isScratching.value = true;
+  if (e.touches && e.touches[0]) {
+    const rect = scratchCanvasRef.value.getBoundingClientRect();
+    scratchAt(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+  }
+};
+
+const doScratchTouch = (e) => {
+  if (!isScratching.value) return;
+  if (e.touches && e.touches[0]) {
+    e.preventDefault();
+    const rect = scratchCanvasRef.value.getBoundingClientRect();
+    scratchAt(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+  }
+};
+
+const claimLoyaltyReward = async (reward) => {
+  if (!restaurant.value || claimingReward.value) return;
+  claimingReward.value = true;
+  try {
+    const phone = customerForm.value.phone || phoneCheckInput.value;
+    const res = await axios.post(`/r/${restaurant.value.slug}/claim-loyalty-reward`, {
+      customer_phone: phone,
+      reward_id: reward?.id || null,
+    });
+    if (res.data.success) {
+      activeLoyaltyVoucher.value = res.data.voucher;
+      localStorage.setItem(`qrmenu_loyalty_voucher_${restaurant.value.id}`, JSON.stringify(res.data.voucher));
+      launchConfetti();
+      playSound('payment_success');
+      await fetchLoyaltyStatus(phone);
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Could not claim reward.');
+  } finally {
+    claimingReward.value = false;
+  }
+};
+
+const removeVoucher = () => {
+  activeLoyaltyVoucher.value = null;
+  if (restaurant.value) {
+    localStorage.removeItem(`qrmenu_loyalty_voucher_${restaurant.value.id}`);
+  }
+};
+
+const openLoyaltyModal = async () => {
+  showLoyaltyModal.value = true;
+  const phone = customerForm.value.phone || phoneCheckInput.value;
+  await fetchLoyaltyStatus(phone);
+  await nextTick();
+  if (activeGameType.value === 'spinner') {
+    drawSpinnerWheel();
+  } else if (activeGameType.value === 'scratch') {
+    initScratchCanvas();
+  }
+};
+
+const switchGameToScratch = async () => {
+  activeGameType.value = 'scratch';
+  await nextTick();
+  initScratchCanvas();
+};
+
+const handlePhoneLookup = async () => {
+  if (!phoneCheckInput.value) return;
+  phoneCheckLoading.value = true;
+  try {
+    customerForm.value.phone = phoneCheckInput.value;
+    localStorage.setItem('qrmenu_customer_phone', phoneCheckInput.value);
+    await fetchLoyaltyStatus(phoneCheckInput.value);
+    await nextTick();
+    if (activeGameType.value === 'spinner') {
+      drawSpinnerWheel();
+    } else {
+      initScratchCanvas();
+    }
+  } finally {
+    phoneCheckLoading.value = false;
+  }
+};
 
 // Submit Order
 const submitOrder = async () => {
@@ -1419,6 +2398,7 @@ const submitOrder = async () => {
       special_notes: customerForm.value.notes,
       payment_method: paymentMethod.value,
       items: cart.value.map(i => ({ id: i.id, quantity: i.quantity })),
+      loyalty_voucher: activeLoyaltyVoucher.value,
     };
 
     const res = await axios.post('/orders', payload);
@@ -1426,6 +2406,10 @@ const submitOrder = async () => {
     if (res.data.success) {
       cart.value = [];
       showCheckoutModal.value = false;
+      if (activeLoyaltyVoucher.value) {
+        localStorage.removeItem(`qrmenu_loyalty_voucher_${restaurant.value.id}`);
+        activeLoyaltyVoucher.value = null;
+      }
       // Persist customer details and active table
       localStorage.setItem('qrmenu_customer_name', customerForm.value.name);
       localStorage.setItem('qrmenu_customer_phone', customerForm.value.phone);

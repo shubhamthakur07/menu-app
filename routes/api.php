@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LoyaltyProgramController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Owner\CategoryController;
+use App\Http\Controllers\Owner\LoyaltyController as OwnerLoyaltyController;
 use App\Http\Controllers\Owner\MenuItemController;
 use App\Http\Controllers\Owner\MenuScanController;
 use App\Http\Controllers\Owner\OwnerOrderController;
@@ -26,6 +28,10 @@ Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/orders/{orderCode}', [OrderController::class, 'show']);
 Route::post('/orders/{orderCode}/verify-payment', [OrderController::class, 'recordPayment']);
 Route::post('/orders/{orderCode}/apply-game-reward', [OrderController::class, 'applyGameDiscount']);
+
+// Customer Loyalty Program Routes
+Route::get('/r/{slug}/loyalty-status', [LoyaltyProgramController::class, 'status']);
+Route::post('/r/{slug}/claim-loyalty-reward', [LoyaltyProgramController::class, 'claim']);
 
 /*
 |--------------------------------------------------------------------------
@@ -69,6 +75,10 @@ Route::middleware('auth')->group(function () {
     // Orders Management
     Route::get('/owner/orders', [OwnerOrderController::class, 'index']);
     Route::patch('/owner/orders/{id}/status', [OwnerOrderController::class, 'updateStatus']);
+
+    // Loyalty Program Management
+    Route::get('/owner/loyalty', [OwnerLoyaltyController::class, 'index']);
+    Route::put('/owner/loyalty', [OwnerLoyaltyController::class, 'update']);
 
     // Dynamic Tables Management
     Route::get('/owner/tables', [TableController::class, 'index']);

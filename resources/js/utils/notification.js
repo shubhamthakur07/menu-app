@@ -101,3 +101,46 @@ export const sendSystemNotification = (title, body, icon = '/icon-192.png') => {
     }
   } catch (e) {}
 };
+
+// Fun and lightweight festive confetti burst
+export const launchConfetti = () => {
+  try {
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.inset = '0';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '99999';
+    container.style.overflow = 'hidden';
+    document.body.appendChild(container);
+
+    const colors = ['#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#3b82f6', '#ef4444', '#ffd700'];
+    const count = 50;
+
+    for (let i = 0; i < count; i++) {
+      const confetti = document.createElement('div');
+      const size = Math.random() * 8 + 6;
+      confetti.style.position = 'absolute';
+      confetti.style.width = `${size}px`;
+      confetti.style.height = `${size * (Math.random() > 0.5 ? 1.5 : 1)}px`;
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      confetti.style.left = `${Math.random() * 100}vw`;
+      confetti.style.top = '-20px';
+      confetti.style.opacity = '1';
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+      confetti.style.transition = `all ${Math.random() * 2 + 1.5}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+      container.appendChild(confetti);
+
+      setTimeout(() => {
+        confetti.style.top = `${window.innerHeight + 50}px`;
+        confetti.style.left = `${parseFloat(confetti.style.left) + (Math.random() * 20 - 10)}vw`;
+        confetti.style.transform = `rotate(${Math.random() * 720}deg)`;
+        confetti.style.opacity = '0';
+      }, 50);
+    }
+
+    setTimeout(() => {
+      container.remove();
+    }, 3500);
+  } catch (e) {}
+};

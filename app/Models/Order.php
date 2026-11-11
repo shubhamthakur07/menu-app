@@ -29,6 +29,8 @@ class Order extends Model
         'discount_amount',
         'discount_reason',
         'game_reward_claimed',
+        'loyalty_reward_claimed',
+        'loyalty_reward_details',
         'tax_amount',
         'total_amount',
         'payment_method',
@@ -45,6 +47,8 @@ class Order extends Model
             'subtotal' => 'float',
             'discount_amount' => 'float',
             'game_reward_claimed' => 'boolean',
+            'loyalty_reward_claimed' => 'boolean',
+            'loyalty_reward_details' => 'array',
             'tax_amount' => 'float',
             'total_amount' => 'float',
         ];

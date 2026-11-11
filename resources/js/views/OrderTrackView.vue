@@ -117,6 +117,54 @@
         </div>
       </div>
 
+      <!-- Royalty Visit Stamp Card (Loyalty Rewards Program) -->
+      <div v-if="loyaltyProgress" class="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-yellow-500/10 border-2 border-amber-300 rounded-3xl p-5 shadow-sm">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 text-slate-950 flex items-center justify-center text-lg font-black shadow shrink-0">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-slate-900">Royalty Stamp Recorded!</span>
+                <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 uppercase">VISIT #{{ loyaltyProgress.visit_count }}</span>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-0.5">
+                <template v-if="loyaltyProgress.can_play">
+                  🎉 Milestone Reached! You have unlocked <strong>{{ loyaltyProgress.available_tickets }} Lucky Reward Ticket</strong>!
+                </template>
+                <template v-else>
+                  <strong>{{ loyaltyProgress.visits_remaining }}</strong> more visit(s) needed to unlock your Lucky Spinner / Scratch Card ticket!
+                </template>
+              </p>
+            </div>
+          </div>
+
+          <div class="shrink-0">
+            <span class="text-xs font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-3 py-1 rounded-full">
+              {{ loyaltyProgress.visit_count }} / {{ loyaltyProgress.required_visits }} Stamps
+            </span>
+          </div>
+        </div>
+
+        <!-- Stamp Progress Dots -->
+        <div class="grid grid-cols-5 gap-2 mt-3.5">
+          <div
+            v-for="st in loyaltyProgress.required_visits"
+            :key="st"
+            :class="[
+              'py-1.5 rounded-xl text-center text-[10px] font-black border transition flex items-center justify-center gap-1',
+              st <= ((loyaltyProgress.visit_count % loyaltyProgress.required_visits === 0 && loyaltyProgress.visit_count > 0) ? loyaltyProgress.required_visits : (loyaltyProgress.visit_count % loyaltyProgress.required_visits))
+                ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-xs'
+                : 'bg-white/80 border-dashed border-slate-300 text-slate-400'
+            ]"
+          >
+            <i v-if="st <= ((loyaltyProgress.visit_count % loyaltyProgress.required_visits === 0 && loyaltyProgress.visit_count > 0) ? loyaltyProgress.required_visits : (loyaltyProgress.visit_count % loyaltyProgress.required_visits))" class="fa-solid fa-check text-[9px]"></i>
+            <span>#{{ st }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Mind Game Waiting Banner Card (Play & Win 5% Discount) -->
       <div class="relative overflow-hidden bg-gradient-to-r from-violet-900 via-indigo-900 to-slate-900 rounded-3xl p-5 shadow-lg border border-indigo-500/30 text-white">
         <!-- Glow / Background decoration -->
@@ -320,6 +368,14 @@
               <i class="fa-solid fa-trophy text-amber-500"></i> Mind Game Winner (5% OFF):
             </span>
             <span>-{{ order.restaurant?.currency }}{{ order.discount_amount }}</span>
+          </div>
+
+          <!-- Royalty Reward Discount Row -->
+          <div v-if="order.loyalty_reward_claimed && order.loyalty_reward_details" class="flex justify-between text-amber-700 font-bold bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-300">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-crown text-amber-500"></i> Royalty Reward ({{ order.loyalty_reward_details.reward_title }}):
+            </span>
+            <span>-{{ order.restaurant?.currency }}{{ order.loyalty_reward_details.discount_amount }}</span>
           </div>
 
           <div class="flex justify-between text-slate-500">
@@ -669,6 +725,7 @@ const upiQrDataUrl = ref('');
 const loading = ref(true);
 const txnRef = ref('');
 const verifyingPayment = ref(false);
+const loyaltyProgress = ref(null);
 
 // Live Notifications & Alerts State
 const prevOrderStatus = ref(null);
@@ -901,6 +958,7 @@ const fetchOrder = async () => {
     if (res.data.success) {
       const incoming = res.data.order;
       upiString.value = res.data.upi_string;
+      loyaltyProgress.value = res.data.loyalty_progress || null;
 
       if (incoming.customer_name) {
         localStorage.setItem('qrmenu_customer_name', incoming.customer_name);

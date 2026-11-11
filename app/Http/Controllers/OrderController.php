@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Restaurant;
-use App\Models\RestaurantTable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +31,7 @@ class OrderController extends Controller
             'customer_email' => 'nullable|email|max:100',
             'special_notes' => 'nullable|string|max:500',
             'payment_method' => 'required|in:upi,card,cash',
+            'loyalty_voucher' => 'nullable|array',
             'items' => 'required|array|min:1',
             'items.*.id' => 'required|exists:menu_items,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -42,7 +41,7 @@ class OrderController extends Controller
 
         $restaurant = Restaurant::findOrFail($validated['restaurant_id']);
 
-        if (!$restaurant->is_active) {
+        if (! $restaurant->is_active) {
             return response()->json([
                 'success' => false,
                 'message' => 'This restaurant is currently closed.',
@@ -74,7 +73,7 @@ class OrderController extends Controller
         }
 
         // Check if Dine-In table already has an active order and is currently occupied
-        if ($orderType === 'dine_in' && !empty($validated['table_number'])) {
+        if ($orderType === 'dine_in' && ! empty($validated['table_number'])) {
             $table = $restaurant->tables()->where('name', $validated['table_number'])->first();
             $existingActiveOrders = Order::where('restaurant_id', $restaurant->id)
                 ->where('table_number', $validated['table_number'])
@@ -94,24 +93,24 @@ class OrderController extends Controller
                 foreach ($existingActiveOrders as $actOrd) {
                     $cleanExistingPhone = preg_replace('/[^0-9]/', '', $actOrd->customer_phone);
                     // Match by phone number
-                    if (!empty($cleanIncomingPhone) && !empty($cleanExistingPhone) && $cleanIncomingPhone === $cleanExistingPhone) {
+                    if (! empty($cleanIncomingPhone) && ! empty($cleanExistingPhone) && $cleanIncomingPhone === $cleanExistingPhone) {
                         $isSameCustomer = true;
                         break;
                     }
                     // Match by order code (continue_order)
-                    if (!empty($continueCode) && strtoupper($actOrd->order_code) === strtoupper($continueCode)) {
+                    if (! empty($continueCode) && strtoupper($actOrd->order_code) === strtoupper($continueCode)) {
                         $isSameCustomer = true;
                         break;
                     }
                     // Match by exact name
-                    if (!empty($incomingName) && strtolower(trim($actOrd->customer_name)) === $incomingName) {
+                    if (! empty($incomingName) && strtolower(trim($actOrd->customer_name)) === $incomingName) {
                         $isSameCustomer = true;
                         break;
                     }
                 }
 
                 // If not the same customer and restaurant disallows shared table orders, block it!
-                if (!$isSameCustomer && !$restaurant->allow_shared_table_orders) {
+                if (! $isSameCustomer && ! $restaurant->allow_shared_table_orders) {
                     return response()->json([
                         'success' => false,
                         'message' => "{$validated['table_number']} is currently occupied by active guests. Please select an available free table.",
@@ -121,14 +120,14 @@ class OrderController extends Controller
         }
 
         // Validate payment method against restaurant configuration
-        if ($validated['payment_method'] === 'upi' && !$restaurant->enable_online_payment) {
+        if ($validated['payment_method'] === 'upi' && ! $restaurant->enable_online_payment) {
             return response()->json([
                 'success' => false,
                 'message' => 'Online UPI payment is currently disabled by this restaurant. Please select Pay at Counter.',
             ], 422);
         }
 
-        if ($validated['payment_method'] === 'cash' && !$restaurant->enable_cash_payment && $restaurant->enable_online_payment) {
+        if ($validated['payment_method'] === 'cash' && ! $restaurant->enable_cash_payment && $restaurant->enable_online_payment) {
             return response()->json([
                 'success' => false,
                 'message' => 'Pay at counter is currently disabled. Please select UPI / Online payment.',
@@ -149,7 +148,7 @@ class OrderController extends Controller
 
             foreach ($validated['items'] as $itemData) {
                 $menuItem = $menuItems->get($itemData['id']);
-                if (!$menuItem) {
+                if (! $menuItem) {
                     throw new \Exception("Item #{$itemData['id']} not found or unavailable.");
                 }
 
@@ -166,28 +165,68 @@ class OrderController extends Controller
                 ];
             }
 
+            // Handle Loyalty Reward Voucher discount if applied
+            $discountAmount = 0.0;
+            $discountReason = null;
+            $loyaltyClaimed = false;
+            $loyaltyDetails = null;
+
+            if (! empty($validated['loyalty_voucher']) && ! empty($validated['loyalty_voucher']['reward_id'])) {
+                $voucher = $validated['loyalty_voucher'];
+                $rewardId = $voucher['reward_id'];
+                $sig = $voucher['signature'] ?? '';
+                $expectedSig = hash_hmac('sha256', "{$restaurant->id}:{$validated['customer_phone']}:{$rewardId}", config('app.key'));
+
+                if (hash_equals($expectedSig, $sig)) {
+                    $rewards = $restaurant->getEffectiveLoyaltyRewards();
+                    $matchedReward = null;
+                    foreach ($rewards as $r) {
+                        if ((string) $r['id'] === (string) $rewardId) {
+                            $matchedReward = $r;
+                            break;
+                        }
+                    }
+
+                    if ($matchedReward) {
+                        $type = $matchedReward['type'] ?? 'flat';
+                        $val = (float) ($matchedReward['value'] ?? 0);
+                        if ($type === 'percent') {
+                            $discountAmount = round(($subtotal * min(100, $val)) / 100, 2);
+                        } elseif ($type === 'flat') {
+                            $discountAmount = min($subtotal, $val);
+                        } elseif ($type === 'bogo' || $type === 'free_item') {
+                            $discountAmount = min($subtotal, $val ?: 100);
+                        }
+                        $discountReason = 'Loyalty Reward: '.$matchedReward['title'].' 🎁';
+                        $loyaltyClaimed = true;
+                        $loyaltyDetails = $matchedReward;
+                    }
+                }
+            }
+
             // Calculate tax and total
             $taxPercentage = $restaurant->tax_percentage ?? 0;
-            $taxAmount = round(($subtotal * $taxPercentage) / 100, 2);
-            $totalAmount = round($subtotal + $taxAmount, 2);
+            $taxableAmount = max(0, $subtotal - $discountAmount);
+            $taxAmount = round(($taxableAmount * $taxPercentage) / 100, 2);
+            $totalAmount = round($taxableAmount + $taxAmount, 2);
 
-            $orderCode = 'ORD-' . strtoupper(Str::random(3)) . rand(100, 999);
+            $orderCode = 'ORD-'.strtoupper(Str::random(3)).rand(100, 999);
 
             $tokenNumber = null;
             $bookingDate = $validated['booking_date'] ?? null;
             $bookingTime = $validated['booking_time'] ?? null;
             $chairOrSpecialist = $validated['chair_or_specialist'] ?? null;
 
-            if ($restaurant->business_type === 'salon' || !empty($bookingDate) || !empty($bookingTime)) {
+            if ($restaurant->business_type === 'salon' || ! empty($bookingDate) || ! empty($bookingTime)) {
                 $targetDate = $bookingDate ?: date('Y-m-d');
                 $tokenNumber = (int) (Order::where('restaurant_id', $restaurant->id)
                     ->whereDate('booking_date', $targetDate)
                     ->max('token_number')) + 1;
 
-                if (!$bookingDate) {
+                if (! $bookingDate) {
                     $bookingDate = $targetDate;
                 }
-                if (!$chairOrSpecialist) {
+                if (! $chairOrSpecialist) {
                     $chairOrSpecialist = $validated['table_number'] ?? 'Chair 1';
                 }
             }
@@ -218,6 +257,10 @@ class OrderController extends Controller
                 'customer_email' => $validated['customer_email'] ?? null,
                 'special_notes' => $validated['special_notes'] ?? null,
                 'subtotal' => $subtotal,
+                'discount_amount' => $discountAmount,
+                'discount_reason' => $discountReason,
+                'loyalty_reward_claimed' => $loyaltyClaimed,
+                'loyalty_reward_details' => $loyaltyDetails,
                 'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount,
                 'payment_method' => $validated['payment_method'],
@@ -230,7 +273,7 @@ class OrderController extends Controller
             }
 
             // If dine_in: link and mark table as occupied in restaurant_tables
-            if ($orderType === 'dine_in' && !empty($validated['table_number'])) {
+            if ($orderType === 'dine_in' && ! empty($validated['table_number'])) {
                 $table = $restaurant->tables()->where('name', $validated['table_number'])->first();
                 if ($table) {
                     $table->update([
@@ -247,7 +290,7 @@ class OrderController extends Controller
             if ($restaurant->upi_id) {
                 $upiPayeeName = urlencode($restaurant->upi_name ?: $restaurant->name);
                 $upiId = $restaurant->upi_id;
-                $note = urlencode("Order " . $order->order_code);
+                $note = urlencode('Order '.$order->order_code);
                 $upiString = "upi://pay?pa={$upiId}&pn={$upiPayeeName}&am={$totalAmount}&cu=INR&tn={$note}";
             }
 
@@ -260,9 +303,10 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to place order: ' . $e->getMessage(),
+                'message' => 'Failed to place order: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -276,7 +320,7 @@ class OrderController extends Controller
             ->with(['items', 'restaurant'])
             ->first();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found.',
@@ -287,14 +331,51 @@ class OrderController extends Controller
         if ($order->restaurant && $order->restaurant->upi_id && $order->payment_status !== 'paid') {
             $upiPayeeName = urlencode($order->restaurant->upi_name ?: $order->restaurant->name);
             $upiId = $order->restaurant->upi_id;
-            $note = urlencode("Order " . $order->order_code);
+            $note = urlencode('Order '.$order->order_code);
             $upiString = "upi://pay?pa={$upiId}&pn={$upiPayeeName}&am={$order->total_amount}&cu=INR&tn={$note}";
+        }
+
+        $loyaltyProgress = null;
+        if ($order->restaurant && $order->restaurant->loyalty_enabled && $order->customer_phone) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $order->customer_phone);
+            if (! empty($cleanPhone)) {
+                $visitCount = Order::where('restaurant_id', $order->restaurant_id)
+                    ->where('order_status', '!=', 'cancelled')
+                    ->where(function ($q) use ($cleanPhone) {
+                        $q->whereRaw("REGEXP_REPLACE(customer_phone, '[^0-9]', '') = ?", [$cleanPhone]);
+                    })
+                    ->selectRaw('DATE(created_at) as visit_date')
+                    ->distinct()
+                    ->count('visit_date');
+
+                $required = $order->restaurant->loyalty_required_visits ?: 5;
+                $claimedRewards = Order::where('restaurant_id', $order->restaurant_id)
+                    ->where('loyalty_reward_claimed', true)
+                    ->where(function ($q) use ($cleanPhone) {
+                        $q->whereRaw("REGEXP_REPLACE(customer_phone, '[^0-9]', '') = ?", [$cleanPhone]);
+                    })
+                    ->count();
+
+                $earnedTickets = (int) floor($visitCount / $required);
+                $availableTickets = max(0, $earnedTickets - $claimedRewards);
+                $remainder = $visitCount % $required;
+                $visitsRemaining = $remainder === 0 ? ($availableTickets > 0 ? 0 : $required) : ($required - $remainder);
+
+                $loyaltyProgress = [
+                    'visit_count' => $visitCount,
+                    'required_visits' => $required,
+                    'available_tickets' => $availableTickets,
+                    'visits_remaining' => $visitsRemaining,
+                    'can_play' => $availableTickets > 0,
+                ];
+            }
         }
 
         return response()->json([
             'success' => true,
             'order' => $order,
             'upi_string' => $upiString,
+            'loyalty_progress' => $loyaltyProgress,
         ]);
     }
 
@@ -312,7 +393,7 @@ class OrderController extends Controller
 
         $order->update([
             'payment_status' => $validated['payment_status'],
-            'transaction_id' => $validated['transaction_id'] ?? ('TXN-' . strtoupper(Str::random(10))),
+            'transaction_id' => $validated['transaction_id'] ?? ('TXN-'.strtoupper(Str::random(10))),
             'order_status' => $order->order_status === 'pending' ? 'accepted' : $order->order_status,
         ]);
 
@@ -332,7 +413,7 @@ class OrderController extends Controller
             ->with(['items', 'restaurant'])
             ->first();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found.',
@@ -369,7 +450,7 @@ class OrderController extends Controller
         if ($order->restaurant && $order->restaurant->upi_id && $order->payment_status !== 'paid') {
             $upiPayeeName = urlencode($order->restaurant->upi_name ?: $order->restaurant->name);
             $upiId = $order->restaurant->upi_id;
-            $note = urlencode("Order " . $order->order_code);
+            $note = urlencode('Order '.$order->order_code);
             $upiString = "upi://pay?pa={$upiId}&pn={$upiPayeeName}&am={$newTotal}&cu=INR&tn={$note}";
         }
 
