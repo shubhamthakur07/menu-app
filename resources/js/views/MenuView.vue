@@ -81,7 +81,7 @@
                     {{ restaurant.name }}
                   </h1>
                   <span class="text-[11px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/40">
-                    <i class="fa-solid fa-circle text-[6px] mr-1"></i> Open
+                    <i class="fa-solid fa-circle text-[6px] mr-1"></i> {{ currentLang === 'hi' ? 'खुला है' : 'Open' }}
                   </span>
                 </div>
                 <p class="text-xs text-amber-300 font-medium mt-0.5">{{ restaurant.tagline }}</p>
@@ -94,7 +94,7 @@
                 :title="restaurant.business_type === 'salon' ? 'Download or Print complete Salon Rate Card as PDF' : 'Download or Print complete Restaurant Menu as PDF'"
               >
                 <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
-                <span>{{ restaurant.business_type === 'salon' ? 'Download Rate Card PDF' : (restaurant.business_type === 'retail' ? 'Download Catalog PDF' : 'Download Menu PDF') }}</span>
+                <span>{{ currentLang === 'hi' ? 'मेन्यू PDF' : (restaurant.business_type === 'salon' ? 'Download Rate Card PDF' : (restaurant.business_type === 'retail' ? 'Download Catalog PDF' : 'Download Menu PDF')) }}</span>
               </button>
             </div>
           </div>
@@ -142,7 +142,7 @@
                   orderType === 'dine_in' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'
                 ]"
               >
-                <i class="fa-solid fa-utensils text-[11px]"></i> Dine-In
+                <i class="fa-solid fa-utensils text-[11px]"></i> {{ currentLang === 'hi' ? 'डाइन-इन' : 'Dine-In' }}
               </button>
 
               <button
@@ -153,7 +153,7 @@
                   orderType === 'delivery' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'
                 ]"
               >
-                <i class="fa-solid fa-motorcycle text-[11px]"></i> Home Delivery
+                <i class="fa-solid fa-motorcycle text-[11px]"></i> {{ currentLang === 'hi' ? 'होम डिलीवरी' : 'Home Delivery' }}
               </button>
 
               <button
@@ -164,7 +164,7 @@
                   orderType === 'takeaway' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-300 hover:text-white'
                 ]"
               >
-                <i class="fa-solid fa-bag-shopping text-[11px]"></i> Takeaway
+                <i class="fa-solid fa-bag-shopping text-[11px]"></i> {{ currentLang === 'hi' ? 'टेकअवे' : 'Takeaway' }}
               </button>
             </div>
 
@@ -176,10 +176,10 @@
                 :class="selectedTableIsOccupied ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'"
               >
                 <i class="fa-solid fa-chair text-xs"></i>
-                <span>{{ currentTable || 'Select Table' }}</span>
-                <span v-if="selectedTableIsOccupied" class="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold ml-1">Occupied</span>
+                <span>{{ currentTable || (currentLang === 'hi' ? 'टेबल चुनें' : 'Select Table') }}</span>
+                <span v-if="selectedTableIsOccupied" class="text-[10px] bg-rose-500 text-white px-1.5 py-0.2 rounded-full font-bold ml-1">{{ currentLang === 'hi' ? 'व्यस्त' : 'Occupied' }}</span>
                 <button @click="showChangeTableModal = true" class="ml-1 text-[11px] text-white underline hover:text-amber-200 font-bold cursor-pointer">
-                  Change
+                  {{ currentLang === 'hi' ? 'बदलें' : 'Change' }}
                 </button>
               </div>
 
@@ -210,30 +210,30 @@
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-extrabold text-xs sm:text-sm text-slate-900">
-                  Royalty Rewards Club
+                  {{ currentLang === 'hi' ? 'रॉयल्टी रिवार्ड्स क्लब' : 'Royalty Rewards Club' }}
                 </span>
                 <span
                   v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play"
                   class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce shadow"
                 >
-                  🎉 Ticket Ready to Spin!
+                  {{ currentLang === 'hi' ? '🎉 लकी टिकट तैयार है!' : '🎉 Ticket Ready to Spin!' }}
                 </span>
                 <span
                   v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0"
                   class="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-full"
                 >
-                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} Visits
+                  {{ loyaltyStatus.customer.visit_count }} / {{ loyaltyStatus.required_visits }} {{ currentLang === 'hi' ? 'विज़िट्स' : 'Visits' }}
                 </span>
               </div>
               <p class="text-[11px] text-slate-600 mt-0.5">
                 <template v-if="loyaltyStatus.customer && loyaltyStatus.customer.can_play">
-                  Aapke paas <strong>1 Lucky Reward Ticket</strong> ready hai! Spin karein aur discount jeetein!
+                  {{ currentLang === 'hi' ? 'आपके पास 1 लकी रिवार्ड टिकट तैयार है! स्पिन करें और डिस्काउंट जीतें!' : 'You have 1 Lucky Reward Ticket ready! Spin and win discounts!' }}
                 </template>
                 <template v-else-if="loyaltyStatus.customer && loyaltyStatus.customer.visit_count > 0">
-                  {{ loyaltyStatus.customer.visits_remaining }} aur visit par Lucky Spinner / Scratch Card unlock hoga!
+                  {{ loyaltyStatus.customer.visits_remaining }} {{ currentLang === 'hi' ? 'और विज़िट पर लकी स्पिनर / स्क्रैच कार्ड अनलॉक होगा!' : 'more visit(s) to unlock Lucky Spinner / Scratch Card!' }}
                 </template>
                 <template v-else>
-                  Har visit par 1 stamp payein. {{ loyaltyStatus.required_visits || 5 }} visits par Lucky Spin se jeetein offers!
+                  {{ currentLang === 'hi' ? `हर विज़िट पर 1 स्टैम्प पाएं। ${loyaltyStatus.required_visits || 5} विज़िट्स पर लकी स्पिन से जीतें ऑफर्स!` : `Earn 1 stamp per visit. Complete ${loyaltyStatus.required_visits || 5} visits to win reward offers!` }}
                 </template>
               </p>
 
@@ -248,8 +248,8 @@
                   ]"
                 >
                   <i class="fa-solid fa-location-dot" :class="isWithinGeofence ? 'text-emerald-600' : 'text-slate-400'"></i>
-                  <span v-if="isWithinGeofence">Within 5 km Reward Zone ({{ userDistanceKm.toFixed(1) }} km away)</span>
-                  <span v-else>{{ userDistanceKm.toFixed(1) }} km away from restaurant</span>
+                  <span v-if="isWithinGeofence">{{ currentLang === 'hi' ? `5 किमी रिवार्ड ज़ोन में (${userDistanceKm.toFixed(1)} किमी दूर)` : `Within 5 km Reward Zone (${userDistanceKm.toFixed(1)} km away)` }}</span>
+                  <span v-else>{{ currentLang === 'hi' ? `रेस्टोरेंट से ${userDistanceKm.toFixed(1)} किमी दूर` : `${userDistanceKm.toFixed(1)} km away from restaurant` }}</span>
                 </span>
               </div>
               <div v-else-if="!locationChecked" class="mt-1">
@@ -259,7 +259,7 @@
                   class="text-[10px] text-amber-700 hover:text-amber-900 font-bold underline flex items-center gap-1 cursor-pointer"
                 >
                   <i class="fa-solid fa-location-crosshairs text-amber-600"></i>
-                  <span>Turn ON Location for 5 km Nearby Reward Alerts</span>
+                  <span>{{ currentLang === 'hi' ? '5 किमी रिवार्ड अलर्ट के लिए लोकेशन ऑन करें' : 'Turn ON Location for 5 km Nearby Reward Alerts' }}</span>
                 </button>
               </div>
             </div>
@@ -271,14 +271,14 @@
               class="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
             >
               <i class="fa-solid fa-dharmachakra animate-spin"></i>
-              <span>Spin & Win</span>
+              <span>{{ currentLang === 'hi' ? 'स्पिन करें' : 'Spin & Win' }}</span>
             </button>
             <button
               v-else
               class="px-3 py-1.5 bg-white text-slate-800 border border-slate-300 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer"
             >
               <i class="fa-solid fa-ticket text-amber-500"></i>
-              <span class="hidden sm:inline">View</span> Stamps
+              <span>{{ currentLang === 'hi' ? 'स्टैम्प्स देखें' : 'View Stamps' }}</span>
             </button>
           </div>
         </div>
@@ -326,11 +326,11 @@
               v-if="restaurant?.enable_voice_search"
               @click="toggleLanguage"
               type="button"
-              class="px-2.5 py-2 rounded-xl text-xs font-black transition border shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 flex items-center gap-1 cursor-pointer"
-              title="Toggle Language (English / हिन्दी)"
+              class="px-2.5 py-2 rounded-xl text-xs font-black transition border shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 flex items-center gap-1.5 cursor-pointer"
+              :title="currentLang === 'hi' ? 'Switch to English' : 'Switch to Hindi (हिन्दी)'"
             >
-              <i class="fa-solid fa-language text-amber-500"></i>
-              <span>{{ currentLang === 'hi' ? 'हिन्दी' : 'ENG' }}</span>
+              <i class="fa-solid fa-language text-amber-500 text-sm"></i>
+              <span>{{ currentLang === 'hi' ? 'English' : 'हिन्दी' }}</span>
             </button>
 
             <!-- Veg Only Toggle (Only visible for Food & Dining) -->
@@ -345,7 +345,7 @@
               <span class="w-2.5 h-2.5 rounded-full border border-current flex items-center justify-center p-0.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
               </span>
-              Veg Only
+              {{ currentLang === 'hi' ? 'सिर्फ वेज' : 'Veg Only' }}
             </button>
           </div>
 
@@ -360,7 +360,7 @@
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               ]"
             >
-              {{ restaurant.business_type === 'salon' ? 'All Services' : (restaurant.business_type === 'retail' ? 'All Products' : 'All Items') }}
+              {{ currentLang === 'hi' ? 'सभी डिश' : (restaurant.business_type === 'salon' ? 'All Services' : (restaurant.business_type === 'retail' ? 'All Products' : 'All Items')) }}
             </button>
             <button
               v-for="cat in restaurant.categories"
@@ -373,7 +373,7 @@
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               ]"
             >
-              {{ cat.name }} ({{ cat.menu_items ? cat.menu_items.length : 0 }})
+              {{ translateText(cat.name) }} ({{ cat.menu_items ? cat.menu_items.length : 0 }})
             </button>
           </div>
         </div>
@@ -400,11 +400,11 @@
           <div v-for="cat in filteredCategories" :key="cat.id" :id="`cat-${cat.id}`" class="space-y-3">
             <div class="flex items-center justify-between border-b border-slate-200 pb-2">
               <div>
-                <h2 class="text-lg font-bold text-slate-900">{{ cat.name }}</h2>
-                <p v-if="cat.description" class="text-xs text-slate-500">{{ cat.description }}</p>
+                <h2 class="text-lg font-bold text-slate-900">{{ translateText(cat.name) }}</h2>
+                <p v-if="cat.description" class="text-xs text-slate-500">{{ translateText(cat.description) }}</p>
               </div>
               <span class="text-xs text-slate-400 font-medium">
-                {{ cat.menu_items.length }} {{ restaurant.business_type === 'salon' ? 'services' : (restaurant.business_type === 'retail' ? 'products' : 'items') }}
+                {{ cat.menu_items.length }} {{ restaurant.business_type === 'salon' ? 'services' : (restaurant.business_type === 'retail' ? 'products' : (currentLang === 'hi' ? 'आइटम' : 'items')) }}
               </span>
             </div>
 
@@ -450,19 +450,19 @@
                       </template>
 
                       <h3 class="font-bold text-slate-900 text-sm sm:text-base leading-snug">
-                        {{ item.name }}
+                        {{ translateText(item.name) }}
                       </h3>
 
                       <span
                         v-if="item.is_recommended"
                         class="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded"
                       >
-                        {{ restaurant.business_type === 'salon' ? 'Popular Choice' : 'Bestseller' }}
+                        {{ currentLang === 'hi' ? 'बेस्टसेलर' : (restaurant.business_type === 'salon' ? 'Popular Choice' : 'Bestseller') }}
                       </span>
                     </div>
 
                     <p class="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
-                      {{ item.description }}
+                      {{ translateText(item.description) }}
                     </p>
                   </div>
 
@@ -474,7 +474,7 @@
                       <i class="fa-regular fa-clock mr-0.5"></i> ~{{ item.duration_minutes || 30 }} Mins
                     </span>
                     <span v-else-if="item.prep_time_minutes" class="text-[10px] text-slate-400">
-                      <i class="fa-regular fa-clock mr-0.5"></i> ~{{ item.prep_time_minutes }}m
+                      <i class="fa-regular fa-clock mr-0.5"></i> ~{{ item.prep_time_minutes }}{{ currentLang === 'hi' ? ' मि' : 'm' }}
                     </span>
                   </div>
                 </div>
@@ -492,7 +492,7 @@
                       v-if="!item.is_available"
                       class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center text-white text-[10px] font-bold"
                     >
-                      Sold Out
+                      {{ currentLang === 'hi' ? 'समाप्त' : 'Sold Out' }}
                     </div>
                   </div>
 
@@ -500,15 +500,15 @@
                   <div class="w-full mt-2">
                     <div v-if="!item.is_available">
                       <button disabled class="w-full py-1.5 bg-slate-200 text-slate-400 text-xs font-semibold rounded-lg cursor-not-allowed">
-                        Sold Out
+                        {{ currentLang === 'hi' ? 'समाप्त' : 'Sold Out' }}
                       </button>
                     </div>
                     <div v-else-if="getItemQuantity(item.id) === 0">
                       <button
                         @click="addToCart(item)"
-                        class="w-full py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-1"
+                        class="w-full py-1.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        <i class="fa-solid fa-plus text-[10px]"></i> ADD
+                        <i class="fa-solid fa-plus text-[10px]"></i> {{ currentLang === 'hi' ? 'जोड़ें' : 'ADD' }}
                       </button>
                     </div>
                     <div v-else class="flex items-center justify-between bg-amber-500 text-slate-950 rounded-lg font-bold text-xs shadow-sm overflow-hidden">
@@ -539,7 +539,7 @@
               {{ cartTotalCount }}
             </div>
             <div>
-              <div class="text-xs text-slate-500 font-medium">Order Total</div>
+              <div class="text-xs text-slate-500 font-medium">{{ currentLang === 'hi' ? 'कुल राशि' : 'Order Total' }}</div>
               <div class="text-lg font-extrabold text-slate-900 leading-tight">
                 {{ restaurant.currency }}{{ cartSubtotal.toFixed(2) }}
               </div>
@@ -548,9 +548,9 @@
 
           <button
             @click="showCheckoutModal = true"
-            class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-lg transition flex items-center gap-2 active:scale-95"
+            class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-lg transition flex items-center gap-2 active:scale-95 cursor-pointer"
           >
-            <span>View Cart & Pay</span>
+            <span>{{ currentLang === 'hi' ? 'कार्ट देखें & ऑर्डर करें' : 'View Cart & Pay' }}</span>
             <i class="fa-solid fa-arrow-right text-xs text-amber-400"></i>
           </button>
         </div>
@@ -565,15 +565,17 @@
           <!-- Modal Header -->
           <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
             <div>
-              <h3 class="font-bold text-slate-900 text-base">Checkout & Place Order</h3>
+              <h3 class="font-bold text-slate-900 text-base">
+                {{ currentLang === 'hi' ? 'चेकआउट & ऑर्डर' : 'Checkout & Place Order' }}
+              </h3>
               <p class="text-xs text-slate-500">
                 {{ restaurant.name }} •
                 <span class="font-bold text-amber-600 uppercase">
-                  {{ orderType === 'dine_in' ? currentTable : (orderType === 'delivery' ? 'Home Delivery' : 'Takeaway') }}
+                  {{ orderType === 'dine_in' ? currentTable : (orderType === 'delivery' ? (currentLang === 'hi' ? 'होम डिलीवरी' : 'Home Delivery') : (currentLang === 'hi' ? 'टेकअवे' : 'Takeaway')) }}
                 </span>
               </p>
             </div>
-            <button @click="showCheckoutModal = false" class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-300">
+            <button @click="showCheckoutModal = false" class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-300 cursor-pointer">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -586,8 +588,12 @@
                 <i class="fa-solid fa-bell-concierge text-sm"></i>
               </div>
               <div>
-                <div class="font-extrabold text-amber-900">Adding to Your Table Order ({{ currentTable }})</div>
-                <p class="text-[11px] text-amber-800 mt-0.5 leading-tight">These extra items will be sent to the kitchen and added to your ongoing meal bill.</p>
+                <div class="font-extrabold text-amber-900">
+                  {{ currentLang === 'hi' ? `आपकी टेबल में और आइटम जोड़ रहे हैं (${currentTable})` : `Adding to Your Table Order (${currentTable})` }}
+                </div>
+                <p class="text-[11px] text-amber-800 mt-0.5 leading-tight">
+                  {{ currentLang === 'hi' ? 'ये नए आइटम किचन को भेजे जाएंगे और आपके वर्तमान बिल में जुड़ जाएंगे।' : 'These extra items will be sent to the kitchen and added to your ongoing meal bill.' }}
+                </p>
               </div>
             </div>
 
@@ -595,23 +601,25 @@
             <div v-else-if="orderType === 'dine_in' && selectedTableIsOccupied && !isMyActiveTable" class="bg-rose-50 border border-rose-300 rounded-2xl p-3.5 text-xs text-rose-950">
               <div class="flex items-center gap-2 font-bold text-rose-900 mb-1">
                 <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
-                <span>{{ currentTable }} is currently occupied with active diners!</span>
+                <span>{{ currentTable }} {{ currentLang === 'hi' ? 'पर अन्य ग्राहक बैठे हैं!' : 'is currently occupied with active diners!' }}</span>
               </div>
               <p class="text-[11px] text-rose-800 leading-relaxed">
-                This table cannot accept a new order right now. Please select an available free table or ask hotel staff to allocate a table.
+                {{ currentLang === 'hi' ? 'इस टेबल पर अभी नया ऑर्डर नहीं लिया जा सकता। कृपया कोई उपलब्ध खाली टेबल चुनें।' : 'This table cannot accept a new order right now. Please select an available free table.' }}
               </p>
               <button
                 type="button"
                 @click="showChangeTableModal = true; showCheckoutModal = false"
                 class="mt-2.5 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs shadow inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <i class="fa-solid fa-chair"></i> Select an Available Table
+                <i class="fa-solid fa-chair"></i> {{ currentLang === 'hi' ? 'खाली टेबल चुनें' : 'Select an Available Table' }}
               </button>
             </div>
 
             <!-- Selected Items List -->
             <div>
-              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Items in Cart</h4>
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                {{ currentLang === 'hi' ? 'कार्ट में आइटम' : 'Items in Cart' }}
+              </h4>
               <div class="space-y-2">
                 <div
                   v-for="item in cart"
@@ -619,7 +627,7 @@
                   class="flex items-center justify-between text-xs py-1.5 border-b border-slate-100"
                 >
                   <div class="flex-1 pr-2">
-                    <span class="font-bold text-slate-800">{{ item.name }}</span>
+                    <span class="font-bold text-slate-800">{{ translateText(item.name) }}</span>
                     <div class="text-[11px] text-slate-400">{{ restaurant.currency }}{{ item.price }} x {{ item.quantity }}</div>
                   </div>
                   <div class="flex items-center gap-2">
@@ -640,25 +648,29 @@
             <div class="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
               <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
                 <span class="flex items-center gap-1.5">
-                  <i class="fa-solid fa-user-pen text-amber-500"></i> Your Details
+                  <i class="fa-solid fa-user-pen text-amber-500"></i> {{ currentLang === 'hi' ? 'आपका विवरण' : 'Your Details' }}
                 </span>
                 <span class="text-[10px] text-slate-400 font-normal">
-                  {{ orderType === 'dine_in' ? 'Dine-In Guest' : (orderType === 'delivery' ? 'Home Delivery' : 'Pickup') }}
+                  {{ orderType === 'dine_in' ? (currentLang === 'hi' ? 'डाइन-इन गेस्ट' : 'Dine-In Guest') : (orderType === 'delivery' ? (currentLang === 'hi' ? 'होम डिलीवरी' : 'Home Delivery') : (currentLang === 'hi' ? 'टेकअवे' : 'Pickup')) }}
                 </span>
               </h4>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Your Full Name *</label>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {{ currentLang === 'hi' ? 'आपका पूरा नाम *' : 'Your Full Name *' }}
+                  </label>
                   <input
                     v-model="customerForm.name"
                     type="text"
-                    placeholder="e.g. Rahul Sharma"
+                    :placeholder="currentLang === 'hi' ? 'उदा. राहुल शर्मा' : 'e.g. Rahul Sharma'"
                     class="w-full px-3 py-2 bg-white rounded-xl text-xs border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </div>
                 <div>
-                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">Phone Number (For Bill/Updates) *</label>
+                  <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                    {{ currentLang === 'hi' ? 'मोबाइल नंबर *' : 'Phone Number (For Bill/Updates) *' }}
+                  </label>
                   <input
                     v-model="customerForm.phone"
                     type="tel"
@@ -671,23 +683,25 @@
               <!-- Home Delivery Address (Only if Delivery is selected) -->
               <div v-if="orderType === 'delivery'">
                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">
-                  Home Delivery Address *
-                  <span class="text-rose-500 text-[10px] font-normal">(House/Flat, Road, Landmark)</span>
+                  {{ currentLang === 'hi' ? 'डिलीवरी का पता *' : 'Home Delivery Address *' }}
+                  <span class="text-rose-500 text-[10px] font-normal">({{ currentLang === 'hi' ? 'मकान नंबर, सड़क, लैंडमार्क' : 'House/Flat, Road, Landmark' }})</span>
                 </label>
                 <textarea
                   v-model="customerForm.address"
                   rows="2"
-                  placeholder="e.g. Flat 302, Sunrise Heights, Near City Mall..."
+                  :placeholder="currentLang === 'hi' ? 'उदा. फ्लैट 302, सनराइज हाइट्स, सिटी मॉल के पास...' : 'e.g. Flat 302, Sunrise Heights, Near City Mall...'"
                   class="w-full px-3 py-2 bg-white rounded-xl text-xs border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 ></textarea>
               </div>
 
               <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Special Cooking Notes (Optional)</label>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                  {{ currentLang === 'hi' ? 'किचन के लिए विशेष निर्देश (वैकल्पिक)' : 'Special Cooking Notes (Optional)' }}
+                </label>
                 <input
                   v-model="customerForm.notes"
                   type="text"
-                  placeholder="e.g. Less spicy, extra tissues, send disposable cutlery"
+                  :placeholder="currentLang === 'hi' ? 'उदा. कम तीखा, एक्स्ट्रा टिशू, चम्मच भेजें' : 'e.g. Less spicy, extra tissues, send disposable cutlery'"
                   class="w-full px-3 py-2 bg-white rounded-xl text-xs border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </div>
@@ -696,7 +710,7 @@
             <!-- Payment Method Selection -->
             <div>
               <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <i class="fa-solid fa-credit-card text-amber-500"></i> Choose Payment Method
+                <i class="fa-solid fa-credit-card text-amber-500"></i> {{ currentLang === 'hi' ? 'भुगतान का तरीका चुनें' : 'Choose Payment Method' }}
               </h4>
 
               <!-- Notice when Online Payment is disabled by Owner -->
@@ -708,9 +722,11 @@
                   <i class="fa-solid fa-hand-holding-dollar"></i>
                 </div>
                 <div>
-                  <div class="text-xs font-bold text-slate-900">Direct Pay at Counter</div>
+                  <div class="text-xs font-bold text-slate-900">
+                    {{ currentLang === 'hi' ? 'काउंटर पर सीधा भुगतान' : 'Direct Pay at Counter' }}
+                  </div>
                   <div class="text-[11px] text-slate-500">
-                    {{ orderType === 'delivery' ? 'Pay upon delivery via cash or UPI.' : 'Your order will be sent to the kitchen or service desk. Settle the bill via cash or card at the counter or table.' }}
+                    {{ currentLang === 'hi' ? 'आपका ऑर्डर किचन में चला जाएगा। बिल का भुगतान काउंटर या टेबल पर कैश/कार्ड द्वारा करें।' : 'Your order will be sent to the kitchen. Settle the bill via cash or card at the counter or table.' }}
                   </div>
                 </div>
               </div>
@@ -725,11 +741,11 @@
                 >
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <i class="fa-solid fa-mobile-screen-button text-amber-600"></i> UPI / Online
+                      <i class="fa-solid fa-mobile-screen-button text-amber-600"></i> {{ currentLang === 'hi' ? 'ऑनलाइन UPI' : 'UPI / Online' }}
                     </span>
                     <input type="radio" value="upi" v-model="paymentMethod" class="accent-amber-500" />
                   </div>
-                  <span class="text-[10px] text-slate-500">GPay, PhonePe, Paytm, QR Scan</span>
+                  <span class="text-[10px] text-slate-500">GPay, PhonePe, Paytm, QR</span>
                 </label>
 
                 <label
@@ -742,12 +758,12 @@
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                       <i class="fa-solid fa-money-bill-wave text-emerald-600"></i>
-                      {{ orderType === 'delivery' ? 'Cash on Delivery' : 'Pay at Counter' }}
+                      {{ orderType === 'delivery' ? (currentLang === 'hi' ? 'कैश ऑन डिलीवरी' : 'Cash on Delivery') : (currentLang === 'hi' ? 'काउंटर / टेबल कैश' : 'Pay at Counter') }}
                     </span>
                     <input type="radio" value="cash" v-model="paymentMethod" class="accent-amber-500" />
                   </div>
                   <span class="text-[10px] text-slate-500">
-                    {{ orderType === 'delivery' ? 'Pay upon delivery at home' : 'Cash or Card after food is served' }}
+                    {{ orderType === 'delivery' ? (currentLang === 'hi' ? 'घर पर डिलीवरी के समय' : 'Pay upon delivery at home') : (currentLang === 'hi' ? 'खाना परोसने के बाद कैश या कार्ड' : 'Cash or Card after food is served') }}
                   </span>
                 </label>
               </div>
@@ -759,8 +775,8 @@
                 <span class="text-xl">👑</span>
                 <div>
                   <div class="text-[11px] font-black text-amber-950 flex items-center gap-1.5">
-                    <span>Royalty Reward Applied!</span>
-                    <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wide">VOUCHER</span>
+                    <span>{{ currentLang === 'hi' ? 'रॉयल्टी रिवार्ड लागू!' : 'Royalty Reward Applied!' }}</span>
+                    <span class="bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-md uppercase tracking-wide">{{ currentLang === 'hi' ? 'वाउचर' : 'VOUCHER' }}</span>
                   </div>
                   <div class="text-[10px] text-slate-700 font-semibold">{{ activeLoyaltyVoucher.reward_title || activeLoyaltyVoucher.title }}</div>
                 </div>
@@ -773,7 +789,7 @@
                   class="text-[10px] text-rose-500 hover:text-rose-700 underline font-semibold cursor-pointer"
                   title="Remove voucher"
                 >
-                  Remove
+                  {{ currentLang === 'hi' ? 'हटाएं' : 'Remove' }}
                 </button>
               </div>
             </div>
@@ -781,21 +797,21 @@
             <!-- Pricing Calculation Breakdown -->
             <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-xs">
               <div class="flex justify-between text-slate-600">
-                <span>Subtotal:</span>
+                <span>{{ currentLang === 'hi' ? 'सबटोटल:' : 'Subtotal:' }}</span>
                 <span>{{ restaurant.currency }}{{ cartSubtotal.toFixed(2) }}</span>
               </div>
               <div v-if="activeLoyaltyVoucher" class="flex justify-between text-emerald-600 font-bold">
                 <span class="flex items-center gap-1">
-                  <i class="fa-solid fa-crown text-amber-500"></i> Royalty Discount ({{ activeLoyaltyVoucher.reward_title || activeLoyaltyVoucher.title }}):
+                  <i class="fa-solid fa-crown text-amber-500"></i> {{ currentLang === 'hi' ? 'रॉयल्टी छूट' : 'Royalty Discount' }} ({{ activeLoyaltyVoucher.reward_title || activeLoyaltyVoucher.title }}):
                 </span>
                 <span>-{{ restaurant.currency }}{{ loyaltyDiscountAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-slate-600">
-                <span>GST / Taxes ({{ restaurant.tax_percentage }}%):</span>
+                <span>{{ currentLang === 'hi' ? 'टैक्स / GST' : 'GST / Taxes' }} ({{ restaurant.tax_percentage }}%):</span>
                 <span>{{ restaurant.currency }}{{ taxAmount.toFixed(2) }}</span>
               </div>
               <div class="flex justify-between text-slate-900 font-extrabold text-sm pt-2 border-t border-slate-200">
-                <span>Total Payable:</span>
+                <span>{{ currentLang === 'hi' ? 'कुल देय राशि:' : 'Total Payable:' }}</span>
                 <span class="text-amber-600">{{ restaurant.currency }}{{ grandTotal.toFixed(2) }}</span>
               </div>
             </div>
@@ -814,12 +830,12 @@
             >
               <i v-if="submittingOrder" class="fa-solid fa-circle-notch fa-spin"></i>
               <span v-else-if="isTableBlockedForOrder">
-                Table Occupied — Select Available Table
+                {{ currentLang === 'hi' ? 'टेबल व्यस्त है — कृपया खाली टेबल चुनें' : 'Table Occupied — Select Available Table' }}
               </span>
               <span v-else-if="orderType === 'dine_in' && selectedTableIsOccupied && isMyActiveTable">
-                Add to {{ currentTable }} Order • {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}
+                {{ currentLang === 'hi' ? `${currentTable} में जोड़ें • ${restaurant.currency}${grandTotal.toFixed(2)}` : `Add to ${currentTable} Order • ${restaurant.currency}${grandTotal.toFixed(2)}` }}
               </span>
-              <span v-else>Confirm & Pay {{ restaurant.currency }}{{ grandTotal.toFixed(2) }}</span>
+              <span v-else>{{ currentLang === 'hi' ? `ऑर्डर कन्फर्म करें • ${restaurant.currency}${grandTotal.toFixed(2)}` : `Confirm & Pay ${restaurant.currency}${grandTotal.toFixed(2)}` }}</span>
             </button>
           </div>
         </div>
@@ -832,20 +848,20 @@
       >
         <div class="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl">
           <div class="flex items-center justify-between mb-2">
-            <h3 class="font-bold text-slate-900 text-base">Select Your Dining Table</h3>
+            <h3 class="font-bold text-slate-900 text-base">{{ currentLang === 'hi' ? 'अपनी डाइनिंग टेबल चुनें' : 'Select Your Dining Table' }}</h3>
             <button @click="showChangeTableModal = false" class="text-slate-400 hover:text-slate-700">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
-          <p class="text-xs text-slate-500 mb-4">Choose the table where you are seated</p>
+          <p class="text-xs text-slate-500 mb-4">{{ currentLang === 'hi' ? 'वह टेबल चुनें जहाँ आप बैठे हैं' : 'Choose the table where you are seated' }}</p>
 
           <!-- Status Legend -->
           <div class="flex items-center gap-4 text-[11px] mb-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
             <span class="flex items-center gap-1.5 font-semibold text-emerald-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Available (Free)
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> {{ currentLang === 'hi' ? 'उपलब्ध (खाली)' : 'Available (Free)' }}
             </span>
             <span class="flex items-center gap-1.5 font-semibold text-amber-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Occupied (Active Diners)
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> {{ currentLang === 'hi' ? 'व्यस्त (ग्राहक बैठे हैं)' : 'Occupied (Active Diners)' }}
             </span>
           </div>
 
@@ -879,7 +895,7 @@
               </div>
 
               <div class="flex items-center justify-between text-[10px]">
-                <span class="text-slate-400">{{ tbl.seating_capacity }} Seater</span>
+                <span class="text-slate-400">{{ tbl.seating_capacity }} {{ currentLang === 'hi' ? 'सीटर' : 'Seater' }}</span>
                 <span
                   :class="[
                     'font-bold',
@@ -888,7 +904,7 @@
                       : 'text-emerald-600'
                   ]"
                 >
-                  {{ tbl.status === 'occupied' ? (tbl.name === currentTable && isMyActiveTable ? 'Your Table' : 'Occupied') : 'Available' }}
+                  {{ tbl.status === 'occupied' ? (tbl.name === currentTable && isMyActiveTable ? (currentLang === 'hi' ? 'आपकी टेबल' : 'Your Table') : (currentLang === 'hi' ? 'व्यस्त' : 'Occupied')) : (currentLang === 'hi' ? 'उपलब्ध' : 'Available') }}
                 </span>
               </div>
             </button>
@@ -898,8 +914,8 @@
           <div v-if="selectedTableIsOccupied && !isMyActiveTable" class="p-3 mb-3 bg-rose-50 border border-rose-300 rounded-xl text-[11px] text-rose-900 flex items-start gap-2">
             <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5"></i>
             <div>
-              <span class="font-bold">{{ currentTable }} is currently occupied with active diners.</span>
-              <p class="text-[10px] text-rose-800 mt-0.5">Please choose an available (Free) table from the green options above to place your order.</p>
+              <span class="font-bold">{{ currentTable }} {{ currentLang === 'hi' ? 'पर अभी अन्य ग्राहक बैठे हैं।' : 'is currently occupied with active diners.' }}</span>
+              <p class="text-[10px] text-rose-800 mt-0.5">{{ currentLang === 'hi' ? 'कृपया अपना ऑर्डर देने के लिए ऊपर दिए गए हरे (खाली) विकल्पों में से टेबल चुनें।' : 'Please choose an available (Free) table from the green options above to place your order.' }}</p>
             </div>
           </div>
 
@@ -908,7 +924,7 @@
             :disabled="isTableBlockedForOrder || !currentTable"
             class="w-full py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ isTableBlockedForOrder ? 'Please Choose an Available Table' : `Confirm ${currentTable}` }}
+            {{ isTableBlockedForOrder ? (currentLang === 'hi' ? 'कृपया उपलब्ध टेबल चुनें' : 'Please Choose an Available Table') : (currentLang === 'hi' ? `${currentTable} कन्फर्म करें` : `Confirm ${currentTable}`) }}
           </button>
         </div>
       </div>
@@ -1758,6 +1774,203 @@ const showCheckoutModal = ref(false);
 const currentLang = ref(localStorage.getItem('qrmenu_lang') || 'en');
 const isListening = ref(false);
 let speechRecognitionInstance = null;
+
+const hindiWordMap = {
+  // Common full sentences and dish descriptions
+  'fresh cottage cheese cubes marinated in spicy red yogurt sauce and charred to perfection.': 'ताज़ा पनीर के टुकड़े तीखे लाल दही मसाले में मैरीनेट कर तंदूर में सेके हुए।',
+  'fresh cottage cheese cubes marinated in spicy red yogurt sauce and charred to perfection': 'ताज़ा पनीर के टुकड़े तीखे लाल दही मसाले में मैरीनेट कर तंदूर में सेके हुए।',
+  'boneless juicy chicken thighs infused with tandoori spices and smoked over charcoal.': 'तंदूरी मसालों में डूबे रसीले बोनलेस चिकन पीस, चारकोल पर भुने हुए।',
+  'boneless juicy chicken thighs infused with tandoori spices and smoked over charcoal': 'तंदूरी मसालों में डूबे रसीले बोनलेस चिकन पीस, चारकोल पर भुने हुए।',
+  'freshly char-grilled tandoori delicacies and crisp appetizers.': 'तंदूर पर ताज़ा सेके हुए लाजवाब व्यंजन और कुरकुरे स्टार्टर्स।',
+  'freshly char-grilled tandoori delicacies and crisp appetizers': 'तंदूर पर ताज़ा सेके हुए लाजवाब व्यंजन और कुरकुरे स्टार्टर्स।',
+  'rich creamy gravies cooked with aromatic spices.': 'सुगंधित मसालों और मक्खन के साथ पकाई गई शाही गाढ़ी ग्रेवी।',
+  'rich creamy gravies cooked with aromatic spices': 'सुगंधित मसालों और मक्खन के साथ पकाई गई शाही गाढ़ी ग्रेवी।',
+  'fragrant basmati rice preparations and fresh oven-baked breads.': 'खुशबूदार बासमती चावल की बिरयानी और गरमा-गरम तंदूरी रोटियां।',
+  'fragrant basmati rice preparations and fresh oven-baked breads': 'खुशबूदार बासमती चावल की बिरयानी और गरमा-गरम तंदूरी रोटियां।',
+  'chilled soft drinks, shakes, mocktails, and fresh juices.': 'ठंडे पेय पदार्थ, स्वादिष्ट शेक्स, मॉकटेल्स और ताज़ा जूस।',
+  'chilled soft drinks, shakes, mocktails, and fresh juices': 'ठंडे पेय पदार्थ, स्वादिष्ट शेक्स, मॉकटेल्स और ताज़ा जूस।',
+  'sweet desserts, ice creams, and traditional indian sweets.': 'स्वादिष्ट मिठाइयां, कुल्फी, आइसक्रीम और भारतीय डेसर्ट।',
+  'sweet desserts, ice creams, and traditional indian sweets': 'स्वादिष्ट मिठाइयां, कुल्फी, आइसक्रीम और भारतीय डेसर्ट।',
+
+  // Dishes and Categories
+  'starters & tandoor': 'स्टार्टर्स और तंदूर',
+  'starters': 'स्टार्टर्स',
+  'starter': 'स्टार्टर',
+  'tandoori': 'तंदूरी',
+  'tandoor': 'तंदूर',
+  'main course curries': 'मेन कोर्स करी व सब्जियां',
+  'main course': 'मेन कोर्स',
+  'biryani & breads': 'बिरयानी और रोटियां',
+  'biryani': 'बिरयानी',
+  'breads': 'रोटियां',
+  'bread': 'रोटी',
+  'drinks & beverages': 'ड्रिंक्स और पेय पदार्थ',
+  'drinks': 'ड्रिंक्स',
+  'drink': 'ड्रिंक',
+  'beverages': 'पेय पदार्थ',
+  'beverage': 'पेय',
+  'desserts': 'मीठा / डेसर्ट्स',
+  'dessert': 'मीठा / डेसर्ट',
+  'chinese': 'चाइनीज',
+  'fast food': 'फास्ट फूड',
+  'snacks': 'स्नैक्स / नाश्ता',
+  'snack': 'नाश्ता',
+  'breakfast': 'नाश्ता',
+  'rice & noodles': 'चावल और नूडल्स',
+  'fried rice': 'फ्राइड राइस',
+  'spring roll': 'स्प्रिंग रोल',
+  'cold drinks': 'कोल्ड ड्रिंक्स',
+  'cold drink': 'कोल्ड ड्रिंक',
+  'mineral water': 'मिनरल वाटर',
+  'water bottle': 'पानी की बोतल',
+
+  // Ingredients, Cooking Methods & Types
+  'paneer': 'पनीर',
+  'cottage cheese': 'पनीर',
+  'tikka': 'टिक्का',
+  'angara': 'अंगारा',
+  'chicken': 'चिकन',
+  'mutton': 'मटन',
+  'fish': 'मछली',
+  'prawns': 'झींगा',
+  'prawn': 'झींगा',
+  'egg': 'अंडा',
+  'dal': 'दाल',
+  'daal': 'दाल',
+  'makhani': 'मखनी',
+  'tadka': 'तड़का',
+  'fry': 'फ्राई',
+  'fried': 'फ्राइड',
+  'butter': 'बटर',
+  'masala': 'मसाला',
+  'kadhai': 'कड़ाही',
+  'karahi': 'कड़ाही',
+  'handi': 'हांडी',
+  'shahi': 'शाही',
+  'palak': 'पालक',
+  'kofta': 'कोफ्ता',
+  'korma': 'कोरमा',
+  'curry': 'करी',
+  'curries': 'करी',
+  'gravy': 'ग्रेवी',
+  'gravies': 'ग्रेवी',
+  'dry': 'ड्राई',
+  'roti': 'रोटी',
+  'naan': 'नान',
+  'paratha': 'पराठा',
+  'kulcha': 'कुलचा',
+  'rice': 'चावल',
+  'jeera': 'जीरा',
+  'pulao': 'पुलाव',
+  'malai': 'मलाई',
+  'reshmi': 'रेशमी',
+  'achari': 'अचारी',
+  'afghani': 'अफ़गानी',
+  'kebab': 'कबाब',
+  'kabab': 'कबाब',
+  'seekh': 'सीख',
+  'chilli': 'चिली',
+  'chili': 'चिली',
+  'manchurian': 'मंचूरियन',
+  'noodles': 'नूडल्स',
+  'noodle': 'नूडल्स',
+  'momos': 'मोमोज',
+  'momo': 'मोमो',
+  'soup': 'सूप',
+  'salad': 'सलाद',
+  'raita': 'रायता',
+  'boondi': 'बूंदी',
+  'papad': 'पापड़',
+  'thali': 'थाली',
+  'special': 'स्पेशल',
+  'deluxe': 'डीलक्स',
+  'combo': 'कॉम्बो',
+  'meal': 'मील',
+  'burger': 'बर्गर',
+  'pizza': 'पिज़्ज़ा',
+  'sandwich': 'सैंडविच',
+  'pasta': 'पास्ता',
+  'garlic': 'गार्लिक',
+  'onion': 'प्याज',
+  'methi': 'मेथी',
+  'aloo': 'आलू',
+  'gobi': 'गोभी',
+  'matar': 'मटर',
+  'chana': 'चना',
+  'rajma': 'राजमा',
+  'mushroom': 'मशरूम',
+  'corn': 'कॉर्न',
+  'crispy': 'क्रिस्पी',
+  'crunchy': 'क्रंची',
+  'spicy': 'तीखा / मसालेदार',
+  'sweet': 'मीठा',
+  'gulab jamun': 'गुलाब जामुन',
+  'rasgulla': 'रसगुल्ला',
+  'kheer': 'खीर',
+  'halwa': 'हलवा',
+  'ice cream': 'आइसक्रीम',
+  'shake': 'शेक',
+  'shakes': 'शेक्स',
+  'lassi': 'लस्सी',
+  'chaas': 'छाछ',
+  'buttermilk': 'छाछ',
+  'tea': 'चाय',
+  'chai': 'चाय',
+  'coffee': 'कॉफी',
+  'cold': 'कोल्ड',
+  'hot': 'गर्म',
+  'water': 'पानी',
+
+  // Descriptive words
+  'fresh': 'ताज़ा',
+  'freshly': 'ताज़ा',
+  'marinated': 'मैरीनेटेड',
+  'charred': 'सेका हुआ',
+  'perfection': 'परफेक्ट',
+  'boneless': 'बोनलेस',
+  'juicy': 'रसीला',
+  'thighs': 'पीस',
+  'infused': 'युक्त',
+  'spices': 'मसाले',
+  'smoked': 'भुना हुआ',
+  'charcoal': 'चारकोल',
+  'delicacies': 'स्वादिष्ट व्यंजन',
+  'crisp': 'कुरकुरा',
+  'appetizers': 'स्टार्टर्स',
+  'appetizer': 'स्टार्टर',
+  'rich': 'शाही',
+  'creamy': 'मलाईदार',
+  'aromatic': 'सुगंधित',
+  'fragrant': 'खुशबूदार',
+  'basmati': 'बासमती',
+  'chilled': 'ठंडा',
+  'mocktails': 'मॉकटेल्स',
+  'mocktail': 'मॉकटेल',
+  'juices': 'जूस',
+  'juice': 'जूस',
+  'sauce': 'सॉस',
+  'yogurt': 'दही',
+  'traditional': 'पारंपरिक',
+  'items': 'आइटम',
+  'item': 'आइटम',
+};
+
+const translateText = (text) => {
+  if (!text || currentLang.value !== 'hi') return text;
+  const clean = text.trim();
+  const lower = clean.toLowerCase();
+  if (hindiWordMap[lower]) return hindiWordMap[lower];
+
+  let res = clean;
+  const keys = Object.keys(hindiWordMap).sort((a, b) => b.length - a.length);
+  for (const k of keys) {
+    const r = new RegExp(`\\b${k}\\b`, 'gi');
+    if (r.test(res)) {
+      res = res.replace(r, hindiWordMap[k]);
+    }
+  }
+  return res;
+};
 
 const toggleLanguage = () => {
   currentLang.value = currentLang.value === 'en' ? 'hi' : 'en';
