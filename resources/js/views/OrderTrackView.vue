@@ -95,10 +95,10 @@
             </span>
 
             <button
-              @click="enableCustomerAlerts"
+              @click="toggleCustomerAlerts"
               class="text-[10px] font-bold px-2.5 py-1 rounded-xl border flex items-center gap-1 transition cursor-pointer"
               :class="customerAlertsEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
-              :title="customerAlertsEnabled ? 'Live Sound & Status Alerts Active' : 'Enable sound alerts for cooking, ready, and payment status'"
+              :title="customerAlertsEnabled ? 'Live Sound & Status Alerts Active (Click to mute)' : 'Enable sound alerts for cooking, ready, and payment status'"
             >
               <i :class="customerAlertsEnabled ? 'fa-solid fa-bell text-emerald-600' : 'fa-regular fa-bell text-slate-500'"></i>
               <span>{{ customerAlertsEnabled ? 'Alerts ON' : 'Enable Alerts' }}</span>
@@ -942,13 +942,31 @@ const loadErrorCode = ref(null);
 const prevOrderStatus = ref(null);
 const prevPaymentStatus = ref(null);
 const customerToast = ref(null);
-const customerAlertsEnabled = ref(false);
+
+const getInitialAlertsState = () => {
+  const saved = localStorage.getItem('qrmenu_alerts_enabled');
+  if (saved !== null) {
+    return saved === 'true';
+  }
+  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+    return true;
+  }
+  return false;
+};
+
+const customerAlertsEnabled = ref(getInitialAlertsState());
 let toastTimer = null;
 
-const enableCustomerAlerts = async () => {
-  playSound('status_update');
-  await requestNotificationPermission();
-  customerAlertsEnabled.value = true;
+const toggleCustomerAlerts = async () => {
+  if (customerAlertsEnabled.value) {
+    customerAlertsEnabled.value = false;
+    localStorage.setItem('qrmenu_alerts_enabled', 'false');
+  } else {
+    playSound('status_update');
+    await requestNotificationPermission();
+    customerAlertsEnabled.value = true;
+    localStorage.setItem('qrmenu_alerts_enabled', 'true');
+  }
 };
 
 const showToast = (toastObj) => {
@@ -1302,7 +1320,9 @@ const fetchOrder = async () => {
 
       // Detect Live Food Status Updates
       if (prevOrderStatus.value && prevOrderStatus.value !== incoming.order_status) {
-        playSound('status_update');
+        if (customerAlertsEnabled.value) {
+          playSound('status_update');
+        }
 
         if (incoming.order_status === 'preparing') {
           showToast({
@@ -1311,7 +1331,9 @@ const fetchOrder = async () => {
             message: 'Chef has started preparing your order in the kitchen.',
             color: 'bg-orange-500',
           });
-          sendSystemNotification('Cooking Started! 👨‍🍳', 'Chef is now preparing your food in the kitchen.');
+          if (customerAlertsEnabled.value) {
+            sendSystemNotification('Cooking Started! 👨‍🍳', 'Chef is now preparing your food in the kitchen.');
+          }
         } else if (incoming.order_status === 'ready') {
           showToast({
             icon: 'fa-solid fa-bell',
@@ -1319,7 +1341,9 @@ const fetchOrder = async () => {
             message: 'Your dishes are prepared and on the way to your table!',
             color: 'bg-purple-600',
           });
-          sendSystemNotification('Food Ready! 🔔', 'Your meal is freshly prepared and ready!');
+          if (customerAlertsEnabled.value) {
+            sendSystemNotification('Food Ready! 🔔', 'Your meal is freshly prepared and ready!');
+          }
         } else if (['completed', 'served'].includes(incoming.order_status)) {
           showToast({
             icon: 'fa-solid fa-utensils',
@@ -1327,20 +1351,26 @@ const fetchOrder = async () => {
             message: 'Your order has been served. Enjoy your delicious food!',
             color: 'bg-emerald-600',
           });
-          sendSystemNotification('Order Served! 🎉', 'Your order is served. Enjoy your meal!');
+          if (customerAlertsEnabled.value) {
+            sendSystemNotification('Order Served! 🎉', 'Your order is served. Enjoy your meal!');
+          }
         }
       }
 
       // Detect Live Payment Status Updates
       if (prevPaymentStatus.value && prevPaymentStatus.value !== 'paid' && incoming.payment_status === 'paid') {
-        playSound('payment_success');
+        if (customerAlertsEnabled.value) {
+          playSound('payment_success');
+        }
         showToast({
           icon: 'fa-solid fa-circle-check',
           title: 'Payment Completed! 💰',
           message: `Payment of ${incoming.restaurant?.currency || '₹'}${incoming.total_amount} successfully received!`,
           color: 'bg-emerald-600',
         });
-        sendSystemNotification('Payment Completed! 💰', `Payment of ${incoming.restaurant?.currency || '₹'}${incoming.total_amount} confirmed.`);
+        if (customerAlertsEnabled.value) {
+          sendSystemNotification('Payment Completed! 💰', `Payment of ${incoming.restaurant?.currency || '₹'}${incoming.total_amount} confirmed.`);
+        }
       }
 
       prevOrderStatus.value = incoming.order_status;
